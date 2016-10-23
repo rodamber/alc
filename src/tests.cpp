@@ -1,10 +1,16 @@
 #include <cassert>
 #include <iostream>
+#include <sstream>
 #include <tuple>
 #include <vector>
 
-#include "problem.hpp"
+#include "tests.hpp"
 #include "restrictions.hpp"
+
+void run_tests() {
+  literal_conversion_test();
+  at_least_one_test();
+}
 
 problem spec_problem() {
   const server s0(0, 5, 2), s1(1, 4, 1), s2(2, 7, 3), s3(3, 8, 5);
@@ -60,3 +66,36 @@ void literal_conversion_test() {
 
 }
 
+void at_least_one_test() {
+  problem prob = spec_problem();
+
+  std::size_t vms_count = 0;
+  for (auto &j: prob.jobs) {
+    vms_count += j.vms.size();
+  }
+
+  int x = 1;
+  std::ostringstream test;
+
+  for (std::size_t ix = 0; ix < vms_count; ++ix) {
+    for (std::size_t jx = 0; jx < prob.servers.size(); ++jx, ++x) {
+      test << x << dimacs::sep;
+    }
+    test << dimacs::nl;
+  }
+
+  std::ostringstream out;
+  at_least_one_constraint(out, prob);
+
+  // std::cout << "TEST\n"
+  //           << "====" << std::endl;
+
+  // std::cout << test.str() << std::endl;
+
+  // std::cout << "OUT\n"
+  //           << "===" << std::endl;
+
+  // std::cout << out.str() << std::endl;
+
+  assert(test.str() == out.str());
+}

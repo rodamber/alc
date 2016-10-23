@@ -2,9 +2,15 @@
 
 #include <cmath>
 #include <iostream>
+#include <string>
 #include <tuple>
 
 #include "problem.hpp"
+
+namespace dimacs {
+  const std::string sep = " ";
+  const std::string nl  = " 0\n";
+};
 
 inline int literal_to_int(const problem &prob, int i, int j, int k) {
   const std::size_t s = prob.servers.size();

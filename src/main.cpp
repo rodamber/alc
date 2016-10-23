@@ -5,6 +5,8 @@
 #include "parser.hpp"
 #include "problem.hpp"
 
+#include "tests.hpp"
+
 // Returns if the problem is SAT or UNSAT
 bool solve(const problem &prob) {
   (void) prob;
@@ -25,10 +27,12 @@ size_t search(const problem &prob, answer &ans) {
 int main(int argc, char* argv[]) {
   (void) argc;
 
-  const char* filename = argv[1];
-  std::ifstream infile(filename);
+  run_tests();
 
-  parse(infile);
+  // const char* filename = argv[1];
+  // std::ifstream infile(filename);
+
+  // parse(infile);
 
   return 0;
 }
