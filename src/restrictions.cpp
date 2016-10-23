@@ -1,4 +1,4 @@
-#include "problem.hpp"
+#include "restrictions.hpp"
 
 
 void at_least_one_constraint(std::ostream &os, const problem &prob) {
