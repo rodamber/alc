@@ -1,19 +1,11 @@
-#include <cstdio>
-#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <utility>
-#include <vector>
 
-struct Data{
-  unsigned servers;
-  unsigned machines;
-  unsigned jobs;
-} problem;
+#include "parser.hpp"
 
-void input(std::istream& infile) {
+void parse(std::istream& infile) {
   size_t num_servers;
   size_t num_jv_pairs;
 
@@ -21,7 +13,6 @@ void input(std::istream& infile) {
   size_t s_ram;
   size_t s_id;
 
-  //num of servers
   std::string line;
 
   getline(infile, line);
@@ -53,12 +44,6 @@ void input(std::istream& infile) {
     getline(infile, line);
     //create jv_pair
   }
+
 }
 
-int main(int argc, char* argv[]) {
-  (void) argc;
-  const char* filename = argv[1];
-  std::ifstream infile(filename);
-  input(infile);
-  return 0;
-}
