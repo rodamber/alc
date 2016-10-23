@@ -8,51 +8,57 @@
 #include <vector>
 
 struct Data{
-	unsigned servers;
-	unsigned machines;
-	unsigned jobs;
+  unsigned servers;
+  unsigned machines;
+  unsigned jobs;
 } problem;
 
-using namespace std;
+void input(std::istream& infile) {
+  size_t num_servers;
+  size_t num_jv_pairs;
 
-void input(istream& infile) {
-	string line;
-	string word;
-	int servers;
-	int jv_pairs;
-	int s_cpu;
-	int s_ram;
-	int s_id;
-	
-	//num of servers
-	getline(infile, line);
-	ifstream iss(line)
-	if (iss >> servers)
-		cout << servers << endl;
-	
-	for(int tmp = 0; tmp < servers; tmp++){
-		getline(infile, line);
-		ifstream iss(line);
-		//create server object
-		if(iss >> s_id >> s_cpu >> s_ram)
-				cout << s_id << "/" << s_ram << "/" << s_cpu << endl;
-	}
-	
-	//num of (jobs, machines)
-	getline(infile, line);
-	if(iss >> jv_pairs)
-		cout << "Number of Pairs: " << jv_pairs << endl;
-	
-	for(int tmp = 0; tmp < jv_pairs; tmp++){
-		getline(infile, line);
-		//create jv_pair
-	}
+  size_t s_cpu;
+  size_t s_ram;
+  size_t s_id;
+
+  //num of servers
+  std::string line;
+
+  getline(infile, line);
+  std::istringstream iss(line);
+
+  if (iss >> num_servers) {
+    std::cout << num_servers << std::endl;
+  }
+
+  for(size_t tmp = 0; tmp < num_servers; tmp++){
+    getline(infile, line);
+    iss = std::istringstream(line);
+
+    //create server object
+    if(iss >> s_id >> s_cpu >> s_ram) {
+      std::cout << s_id << " " << s_ram << " " << s_cpu << std::endl;
+    }
+  }
+
+  //num of (jobs, machines)
+  getline(infile, line);
+  iss = std::istringstream(line);
+
+  if(iss >> num_jv_pairs) {
+    std::cout << "Number of Pairs: " << num_jv_pairs << std::endl;
+  }
+
+  for(size_t tmp = 0; tmp < num_jv_pairs; tmp++){
+    getline(infile, line);
+    //create jv_pair
+  }
 }
 
 int main(int argc, char* argv[]) {
-	const char* filename = argv[1];
-	iftream infile(filename);
-	input(infile);
-	return 0;
+  (void) argc;
+  const char* filename = argv[1];
+  std::ifstream infile(filename);
+  input(infile);
+  return 0;
 }
-
