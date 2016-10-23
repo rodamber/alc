@@ -10,6 +10,7 @@
 void run_tests() {
   literal_conversion_test();
   at_least_one_test();
+  at_most_one_test();
 }
 
 problem spec_problem() {
@@ -86,6 +87,41 @@ void at_least_one_test() {
 
   std::ostringstream out;
   at_least_one_constraint(out, prob);
+
+  // std::cout << "TEST\n"
+  //           << "====" << std::endl;
+
+  // std::cout << test.str() << std::endl;
+
+  // std::cout << "OUT\n"
+  //           << "===" << std::endl;
+
+  // std::cout << out.str() << std::endl;
+
+  assert(test.str() == out.str());
+}
+
+void at_most_one_test() {
+  problem prob = spec_problem();
+
+  int x = 1;
+  std::ostringstream test;
+
+  for (std::size_t i = 0; i < prob.jobs.size(); ++i) {
+    for (std::size_t j = 0; j < prob.jobs.at(i).vms.size(); ++j) {
+      int y = x;
+      for (std::size_t k0 = 0; k0 < prob.servers.size() - 1; ++k0, ++x) {
+        for (std::size_t k1 = k0 + 1; k1 < prob.servers.size(); ++k1) {
+          test << -1 * (int)(y + k0) << dimacs::sep;
+          test << -1 * (int)(y + k1) << dimacs::nl;
+        }
+      }
+      ++x;
+    }
+  }
+
+  std::ostringstream out;
+  at_most_one_constraint(out, prob);
 
   // std::cout << "TEST\n"
   //           << "====" << std::endl;
