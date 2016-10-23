@@ -1,5 +1,6 @@
 #pragma once
 
 #include <fstream>
+#include "problem.hpp"
 
-void parse(std::istream& infile);
+problem parse(std::istream& infile);
