@@ -34,5 +34,23 @@ void ram_constraint(std::ostream &os, const problem &prob) {
 }
 
 void anti_col_constraint(std::ostream &os, const problem &prob) {
-  (void) os; (void) prob;
+  std::vector<int> anti_col; 
+  for(std::size_t i = 0; i < prob.jobs.size(); i++) {
+    for (std::size_t j = 0; j < prob.jobs.at(i).vms.size(); j++) {
+      if(prob.jobs.at(i).vms.at(j).anti_col){
+		anti_col.push_back(literal_to_int(prob, i, j,0))
+	  }
+	}
+  }
+  for (std::size_t k = 0; i < prob.servers.size(); k++) {
+    for(std::size_t v; v < anti_col.size(); v++) {
+	  os << -1 * (v + k);
+	  if(v == anti_col - 1){
+	    os << dimacs::sep;
+	  }
+	  else{
+		os << dimacs::nl;
+	  }
+	}
+  }
 }
