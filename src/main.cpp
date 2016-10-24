@@ -1,4 +1,6 @@
+#include <iostream>
 #include <fstream>
+#include <string>
 #include <tuple>
 #include <vector>
 
@@ -25,14 +27,18 @@ size_t search(const problem &prob, answer &ans) {
 }
 
 int main(int argc, char* argv[]) {
-  (void) argc;
-
+#ifndef NDEBUG
   run_tests();
+#else
+  if (argc < 2 || (argc == 2 && std::string(argv[1]) == "--help")) {
+    std::cout << "USAGE: proj1 <scenario-file-name>" << std::endl;
+    return 0;
+  }
 
-  // const char* filename = argv[1];
-  // std::ifstream infile(filename);
+  const std::string filename(argv[1]);
+  std::ifstream infile(filename);
 
-  // parse(infile);
-
+  problem prob = parse(infile);
+#endif
   return 0;
 }

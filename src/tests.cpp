@@ -1,4 +1,5 @@
 #include <cassert>
+#include <fstream>
 #include <iostream>
 #include <sstream>
 #include <tuple>
@@ -6,6 +7,7 @@
 
 #include "tests.hpp"
 #include "restrictions.hpp"
+#include "parser.hpp"
 
 void run_tests() {
   literal_conversion_test();
@@ -32,6 +34,13 @@ problem spec_problem() {
   }
 
   return problem(servers, jobs, h);
+}
+
+void parser_test() {
+  std::string input_filename = "../input/01.in";
+  std::ifstream infile(input_filename);
+
+  assert(parse(infile) == spec_problem());
 }
 
 void literal_conversion_test() {

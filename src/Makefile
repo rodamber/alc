@@ -2,7 +2,7 @@
 
 # Declaration of variables
 CC = g++
-CC_FLAGS = -std=c++17 -Wall -Wextra -Wfatal-errors -g
+CC_FLAGS = -std=c++17 -Wall -Wextra -Wfatal-errors -Wno-unused-parameter -g
 
 # File names
 EXEC = proj1
