@@ -85,3 +85,16 @@ struct problem {
   // FIXME
   std::vector<job> jobs;
 };
+
+// A triple representing in which server is a certain VM.
+struct configuration {
+  std::size_t job_id;
+  std::size_t vm_index;
+  std::size_t server_id;
+};
+
+// Answer to the problem.
+struct answer {
+  std::size_t min_server_count; // Minimum number of servers needed.
+  std::vector<configuration> configurations; // Tells where is each VM.
+};

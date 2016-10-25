@@ -6,22 +6,18 @@
 
 #include <parser.hpp>
 #include <problem.hpp>
+#include <solver.hpp>
 
-// Returns if the problem is SAT or UNSAT
-bool solve(const problem &prob) {
-  (void) prob;
-  return false;
-}
+void print_answer(std::ostream &os, answer answer) {
+  os << "o " << answer.min_server_count << "\n";
 
-// A set of triples. The first element of the triple is the job, the second is
-// the vm and the third is the server.
-using answer = std::vector<std::tuple<int, int, int>>;
+  for (auto &config : answer.configurations) {
+    os << config.job_id << " "
+       << config.vm_index << " -> "
+       << config.server_id << "\n";
+  }
 
-// Uses the solve function to search for the optimal solution.
-// Returns the minimal number of servers needed.
-size_t search(const problem &prob, answer &ans) {
-  (void) prob; (void) ans;
-  return -1;
+  os << std::flush;
 }
 
 int main(int argc, char* argv[]) {
@@ -33,6 +29,18 @@ int main(int argc, char* argv[]) {
   const std::string filename(argv[1]);
   std::ifstream infile(filename);
 
-  problem prob = parse(infile);
+  // encoder encoder;
+  // solver solver;
+
+  // encoder.encode(solver, parse(infile));
+
+  // auto maybe_answer = solver.solve();
+
+  // if (maybe_answer) {
+  //   print_answer(std::cout, *maybe_answer);
+  // } else {
+  //   std::cout << "The solver has a bug..." << std::endl;
+  // }
+
   return 0;
 }
