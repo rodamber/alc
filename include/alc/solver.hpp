@@ -26,6 +26,17 @@ namespace alc {
       return var_count_++;
     }
 
+    std::list<std::list<std::int64_t>> clauses() const {
+      std::list<std::list<std::int64_t>> cs;
+
+      for (auto &clause : clauses_) {
+        std::list<std::int64_t> clause_copy(clause.literals);
+        cs.push_back(clause_copy);
+      }
+
+      return cs;
+    }
+
   private:
     // The current number of variables.
     std::int64_t var_count_= 0;

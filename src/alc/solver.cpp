@@ -14,5 +14,5 @@ void alc::solver::add_clauses(std::list<alc::clause> &clauses) {
 }
 
 void alc::solver::add_clauses(std::list<alc::clause> &&clauses) {
-  clauses_.splice(clauses_.begin(), clauses);
+  clauses_.splice(clauses_.end(), clauses);
 }

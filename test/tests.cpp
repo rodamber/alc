@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <fstream>
@@ -26,6 +27,27 @@ int main() {
 
   return 0;
 }
+
+template <class T>
+std::ostream &operator<<(std::ostream& os, const std::list<std::list<T>> ll) {
+  // const std::size_t var_count =
+  //   std::accumulate(ll.begin(), ll.end(), 0, [](std::size_t lhs, std::list<T> rhs) {
+  //       return lhs + rhs.size();
+  //     });
+  // const std::size_t clause_count = ll.size();
+
+  // os << "p cnf " << var_count << " " << clause_count << "\n";
+
+  for (auto &l: ll) {
+    for (auto &x: l) {
+      os << x << " ";
+    }
+    os << " 0\n";
+  }
+
+  return os;
+}
+
 
 problem spec_problem() {
 
@@ -87,77 +109,79 @@ void literal_conversion_test() {
   std::cout << "PASS" << std::endl;
 }
 
-// void at_least_one_test() {
-//   std::cout << "=== AT LEAST ONE: ";
+void at_least_one_test() {
+  std::cout << "=== AT LEAST ONE: ";
 
-//   encoder encoder(solver(), spec_problem());
+  encoder encoder(solver(), spec_problem());
 
-//   const std::size_t vms_count = encoder.vms().size();
-//   const std::size_t servers_count = encoder.vms().size();
+  const std::size_t vms_count = encoder.vms().size();
+  const std::size_t servers_count = encoder.servers().size();
 
-//   int x = 1;
-//   std::ostringstream test;
+  int x = 1;
+  std::ostringstream test;
 
-//   for (std::size_t ix = 0; ix < vms_count; ++ix) {
-//     for (std::size_t jx = 0; jx < servers_count; ++jx, ++x) {
-//       test << x << dimacs::sep;
-//     }
-//     test << dimacs::nl;
-//   }
+  for (std::size_t ix = 0; ix < vms_count; ++ix) {
+    for (std::size_t jx = 0; jx < servers_count; ++jx, ++x) {
+      test << x << dimacs::sep;
+    }
+    test << dimacs::nl;
+  }
 
-//   std::ostringstream out;
-//   at_least_one_constraint(out, prob);
+  encoder.encode_at_least_one_server_per_vm();
 
-//   // std::cout << "TEST\n"
-//   //           << "====" << std::endl;
+  std::ostringstream out;
+  out << encoder.clauses();
 
-//   // std::cout << test.str() << std::endl;
+  // std::cout << "TEST\n"
+  //           << "====" << std::endl;
 
-//   // std::cout << "OUT\n"
-//   //           << "===" << std::endl;
+  // std::cout << test.str() << std::endl;
 
-//   // std::cout << out.str() << std::endl;
+  // std::cout << "OUT\n"
+  //           << "===" << std::endl;
 
-//   assert(test.str() == out.str());
+  std::cout << out.str() << std::endl;
 
-//   std::cout << "PASS" << std::endl;
-// }
+  assert(test.str() == out.str());
 
-// void at_most_one_test() {
-//   std::cout << "=== AT MOST ONE: ";
+  std::cout << "PASS" << std::endl;
+}
 
-//   problem prob = spec_problem();
+void at_most_one_test() {
+  std::cout << "=== AT MOST ONE: ";
 
-//   int x = 1;
-//   std::ostringstream test;
+  problem prob = spec_problem();
 
-//   for (std::size_t i = 0; i < prob.jobs.size(); ++i) {
-//     for (std::size_t j = 0; j < prob.jobs.at(i).vms.size(); ++j) {
-//       int y = x;
-//       for (std::size_t k0 = 0; k0 < prob.servers.size() - 1; ++k0, ++x) {
-//         for (std::size_t k1 = k0 + 1; k1 < prob.servers.size(); ++k1) {
-//           test << -1 * (int)(y + k0) << dimacs::sep;
-//           test << -1 * (int)(y + k1) << dimacs::nl;
-//         }
-//       }
-//       ++x;
-//     }
-//   }
+  int x = 1;
+  std::ostringstream test;
 
-//   std::ostringstream out;
-//   at_most_one_constraint(out, prob);
+  for (std::size_t i = 0; i < prob.jobs.size(); ++i) {
+    for (std::size_t j = 0; j < prob.jobs.at(i).vms.size(); ++j) {
+      int y = x;
+      for (std::size_t k0 = 0; k0 < prob.servers.size() - 1; ++k0, ++x) {
+        for (std::size_t k1 = k0 + 1; k1 < prob.servers.size(); ++k1) {
+          test << -1 * (int)(y + k0) << dimacs::sep;
+          test << -1 * (int)(y + k1) << dimacs::nl;
+        }
+      }
+      ++x;
+    }
+  }
 
-//   // std::cout << "TEST\n"
-//   //           << "====" << std::endl;
+  std::ostringstream out;
+  at_most_one_constraint(out, prob);
 
-//   // std::cout << test.str() << std::endl;
+  // std::cout << "TEST\n"
+  //           << "====" << std::endl;
 
-//   // std::cout << "OUT\n"
-//   //           << "===" << std::endl;
+  // std::cout << test.str() << std::endl;
 
-//   // std::cout << out.str() << std::endl;
+  // std::cout << "OUT\n"
+  //           << "===" << std::endl;
 
-//   assert(test.str() == out.str());
+  // std::cout << out.str() << std::endl;
 
-//   std::cout << "PASS" << std::endl;
-// }
+  assert(test.str() == out.str());
+
+  std::cout << "PASS" << std::endl;
+}

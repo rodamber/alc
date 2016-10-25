@@ -9,29 +9,28 @@ alc::solution alc::encoder::solution() {
   return {};
 }
 
-void alc::encoder::encode_at_least_one_server_per_vm(alc::solver solver) {
+void alc::encoder::encode_at_least_one_server_per_vm() {
   for (auto &vm: vms()) {
     alc::clause clause;
 
     for (auto &s: servers()) {
       clause.add(literal(vm, s));
     }
-    solver.add_clauses({clause});
+    solver_.add_clauses({clause});
   }
 }
 
-void alc::encoder::encode_at_most_one_server_per_vm(alc::solver solver) {
+void alc::encoder::encode_at_most_one_server_per_vm() {
   // FIXME
   return;
 }
 
-void alc::encoder::encode_not_exceeding_server_capacity(alc::solver solver,
-                                                        alc::hardware hw) {
+void alc::encoder::encode_not_exceeding_server_capacity(alc::hardware hw) {
   // FIXME
   return;
 }
 
-void alc::encoder::encode_sequential_weighted_counter(solver, hardware) {
+void alc::encoder::encode_sequential_weighted_counter(alc::hardware hw) {
   // FIXME
   return;
 }
