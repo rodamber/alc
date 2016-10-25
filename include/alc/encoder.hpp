@@ -1,5 +1,8 @@
 #pragma once
 
+// FIXME
+#include <iostream>
+
 #include <experimental/optional>
 
 #include <alc/problem.hpp>
@@ -11,10 +14,6 @@ namespace alc {
   public:
 
     encoder(solver, problem);
-
-    // class servers_ {
-    //   servers_(int k_) : k(k_) { }
-    // };
 
     alc::solution solution();
 
@@ -32,8 +31,11 @@ namespace alc {
       return -1 * lit;
     }
 
-    inline std::vector<server> &servers() {
-      return problem_.servers;
+    class servers_;
+    using servers_t = servers_;
+
+    inline servers_t servers() {
+      return servers_(*this, server_count_);
     }
 
     inline std::vector<virtual_machine> &vms() {
@@ -63,6 +65,9 @@ namespace alc {
     // The problem to encode and solve.
     problem problem_;
 
+    // Number of servers considered for the encoding.
+    std::size_t server_count_;
+
   private:
     void add_clause(alc::clause &&clause) {
       solver_.add_clause(std::move(clause));
@@ -71,6 +76,37 @@ namespace alc {
     // Uses a SAT solver to search for the minimum number of up servers.
     // Returns the model if one is found.
     std::experimental::optional<std::list<std::int64_t>> search() const;
+
+  public:
+    class servers_ {
+    public:
+      servers_(encoder &encoder, int server_count) : encoder_(encoder), server_count_(server_count) { }
+
+      using iterator = std::vector<server>::iterator;
+      using const_iterator = std::vector<server>::const_iterator;
+
+      iterator begin() { return servers().begin(); }
+      iterator end() { return servers().begin() + server_count_; }
+
+      const_iterator cbegin() { return servers().cbegin(); }
+      const_iterator cend() { return servers().cbegin() + server_count_; }
+
+      std::size_t size() { return server_count_; }
+
+      server &at(std::size_t pos) {
+        if (!(pos < size())) throw std::out_of_range("servers_t: " + std::to_string(pos));
+        return servers().at(pos);
+      }
+
+    private:
+      encoder &encoder_;
+      int server_count_ = 0;
+
+    private:
+      std::vector<server> &servers() const {
+        return encoder_.problem_.servers;
+      }
+    };
 
   };
 

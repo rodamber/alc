@@ -91,12 +91,13 @@ void parser_test() {
 void literal_conversion_test() {
   std::cout << "=== LITERAL CONVERSION: ";
 
-  encoder encoder(solver(), spec_problem());
+  problem problem = spec_problem();
+  encoder encoder(solver(), problem);
 
   std::int64_t x = 1;
 
-  for (auto &vm: encoder.vms()) {
-    for (auto &s: encoder.servers()) {
+  for (auto &vm: problem.vms) {
+    for (auto &s: problem.servers) {
       // std::cout << "literal(" << vm.id << ", " << s.id << ") = "
       //           << encoder.literal(vm, s) << "; x = " << x << std::endl;
 
@@ -115,10 +116,11 @@ void literal_conversion_test() {
 void at_least_one_test() {
   std::cout << "=== AT LEAST ONE: ";
 
-  encoder encoder(solver(), spec_problem());
+  problem problem = spec_problem();
+  encoder encoder(solver(), problem);
 
-  const std::size_t vms_count = encoder.vms().size();
-  const std::size_t servers_count = encoder.servers().size();
+  const std::size_t vms_count = problem.vms.size();
+  const std::size_t servers_count = problem.servers.size();
 
   int x = 1;
   std::ostringstream test;
@@ -153,10 +155,11 @@ void at_least_one_test() {
 void at_most_one_test() {
   std::cout << "=== AT MOST ONE: ";
 
-  encoder encoder(solver(), spec_problem());
+  problem problem = spec_problem();
+  encoder encoder(solver(), problem);
 
-  const std::size_t vms_count = encoder.vms().size();
-  const std::size_t servers_count = encoder.servers().size();
+  const std::size_t vms_count = problem.vms.size();
+  const std::size_t servers_count = problem.servers.size();
 
   int x = 1;
   std::ostringstream test;

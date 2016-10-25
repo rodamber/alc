@@ -3,7 +3,7 @@
 #include <alc/encoder.hpp>
 
 alc::encoder::encoder(alc::solver solver, alc::problem problem)
-  : solver_(solver), problem_(problem) {
+  : solver_(solver), problem_(problem), server_count_(problem_.servers.size()) {
   for (auto &vm: vms()) {
     for (auto &server: servers()) {
       // We don't need to store these because we can calculate them in O(1).
