@@ -4,11 +4,9 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <tuple>
 #include <vector>
 
 #include <alc/encoder.hpp>
-#include <alc/restrictions.hpp>
 #include <alc/parser.hpp>
 
 #include "tests.hpp"
@@ -27,6 +25,11 @@ int main() {
 
   return 0;
 }
+
+namespace dimacs {
+  const std::string sep = " ";
+  const std::string nl  = " 0\n";
+};
 
 template <class T>
 std::ostream &operator<<(std::ostream& os, const std::list<std::list<T>> ll) {
