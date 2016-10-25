@@ -17,10 +17,6 @@ int main() {
 #ifdef NDEBUG
   std::cout << "NDEBUG is defined" << std::endl;
 #endif
-
-  std::cout << "TEST" << std::endl
-            << "====" << std::endl;
-
   parser_test();
   literal_conversion_test();
   at_least_one_test();
@@ -49,8 +45,7 @@ problem spec_problem() {
 
 void parser_test() {
 
-  std::cout << "PARSER TEST" << std::endl
-            << "===========" << std::endl;
+  std::cout << "=== PARSER: ";
 
   std::string input_filename = "../input/01.in";
   std::ifstream infile(input_filename);
@@ -63,9 +58,12 @@ void parser_test() {
   assert(parsed_problem.h == spec.h);
   assert(parsed_problem == spec);
 
+  std::cout << "PASS" << std::endl;
 }
 
 void literal_conversion_test() {
+  std::cout << "=== LITERAL CONVERSION: ";
+
   problem prob = spec_problem();
 
   // for (std::size_t ix = 0; ix < prob.h.size(); ++ix) {
@@ -96,9 +94,12 @@ void literal_conversion_test() {
     }
   }
 
+  std::cout << "PASS" << std::endl;
 }
 
 void at_least_one_test() {
+  std::cout << "=== AT LEAST ONE: ";
+
   problem prob = spec_problem();
 
   std::size_t vms_count = 0;
@@ -130,9 +131,13 @@ void at_least_one_test() {
   // std::cout << out.str() << std::endl;
 
   assert(test.str() == out.str());
+
+  std::cout << "PASS" << std::endl;
 }
 
 void at_most_one_test() {
+  std::cout << "=== AT MOST ONE: ";
+
   problem prob = spec_problem();
 
   int x = 1;
@@ -165,4 +170,6 @@ void at_most_one_test() {
   // std::cout << out.str() << std::endl;
 
   assert(test.str() == out.str());
+
+  std::cout << "PASS" << std::endl;
 }
