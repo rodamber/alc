@@ -35,7 +35,7 @@ namespace alc {
       return servers_(*this, server_count_);
     }
 
-    inline std::vector<virtual_machine> &vms() {
+    inline const std::vector<virtual_machine> &vms() const {
       return problem_.vms;
     }
 
@@ -43,7 +43,7 @@ namespace alc {
       return solver_.clauses();
     }
 
-    inline void encode(solver solver) {
+    inline void encode() {
       encode_at_least_one_server_per_vm();
       encode_at_most_one_server_per_vm();
       encode_not_exceeding_server_capacity(CPU);
@@ -77,7 +77,8 @@ namespace alc {
   public:
     class servers_ {
     public:
-      servers_(encoder &encoder, int server_count) : encoder_(encoder), server_count_(server_count) { }
+      servers_(encoder &encoder, int server_count)
+        : encoder_(encoder), server_count_(server_count) { }
 
       using iterator = std::vector<server>::iterator;
       using const_iterator = std::vector<server>::const_iterator;
