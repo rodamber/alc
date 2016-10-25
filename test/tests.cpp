@@ -140,7 +140,7 @@ void at_least_one_test() {
   // std::cout << "OUT\n"
   //           << "===" << std::endl;
 
-  std::cout << out.str() << std::endl;
+  // std::cout << out.str() << std::endl;
 
   assert(test.str() == out.str());
 
@@ -150,26 +150,30 @@ void at_least_one_test() {
 void at_most_one_test() {
   std::cout << "=== AT MOST ONE: ";
 
-  problem prob = spec_problem();
+  encoder encoder(solver(), spec_problem());
+
+  const std::size_t vms_count = encoder.vms().size();
+  const std::size_t servers_count = encoder.servers().size();
 
   int x = 1;
   std::ostringstream test;
 
-  for (std::size_t i = 0; i < prob.jobs.size(); ++i) {
-    for (std::size_t j = 0; j < prob.jobs.at(i).vms.size(); ++j) {
-      int y = x;
-      for (std::size_t k0 = 0; k0 < prob.servers.size() - 1; ++k0, ++x) {
-        for (std::size_t k1 = k0 + 1; k1 < prob.servers.size(); ++k1) {
-          test << -1 * (int)(y + k0) << dimacs::sep;
-          test << -1 * (int)(y + k1) << dimacs::nl;
-        }
+  for (auto &vm: encoder.vms()) {
+    int y = x;
+
+    for (std::size_t k0 = 0; k0 < servers_count - 1; ++k0, ++x) {
+      for (std::size_t k1 = k0 + 1; k1 < servers_count; ++k1) {
+        test << -1 * (int)(y + k0) << dimacs::sep;
+        test << -1 * (int)(y + k1) << dimacs::sep << dimacs::nl;
       }
-      ++x;
     }
+    ++x;
   }
 
+  encoder.encode_at_most_one_server_per_vm();
+
   std::ostringstream out;
-  at_most_one_constraint(out, prob);
+  out << encoder.clauses();
 
   // std::cout << "TEST\n"
   //           << "====" << std::endl;

@@ -23,7 +23,11 @@ namespace alc {
     void add_clauses(std::list<alc::clause> &&clauses);
 
     inline std::int64_t new_var() {
-      return var_count_++;
+      return ++var_count_;
+    }
+
+    inline std::int64_t var_count() {
+      return var_count_;
     }
 
     std::list<std::list<std::int64_t>> clauses() const {

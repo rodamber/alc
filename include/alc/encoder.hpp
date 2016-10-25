@@ -5,8 +5,6 @@
 
 namespace alc {
 
-  enum hardware { CPU, RAM };
-
   class encoder {
   public:
 
@@ -17,6 +15,15 @@ namespace alc {
     // Gets the sat solver integer variable corresponding to the given pair (VM, Server)
     inline int literal(virtual_machine vm, server s) {
       return vm.id * servers().size() + s.id + 1;
+    }
+
+    inline int literal(std::size_t vm_id, std::size_t s_id) {
+      return vm_id * servers().size() + s_id + 1;
+    }
+
+    // Negate a literal.
+    inline int neg(int lit) {
+      return -1 * lit;
     }
 
     inline std::vector<server> &servers() {

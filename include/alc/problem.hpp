@@ -5,10 +5,16 @@
 
 namespace alc {
 
+  enum hardware { CPU, RAM };
+
   struct server {
     server() = default;
     server(std::size_t id_, std::size_t cpu_cap_, std::size_t ram_cap_)
       : cpu_cap(cpu_cap_), ram_cap(ram_cap_), id(id_) {
+    }
+
+    std::size_t capacity(hardware hw) const {
+      return (hw == CPU) ? cpu_cap : ram_cap;
     }
 
     friend bool operator==(const server &x, const server &y) {
@@ -31,6 +37,10 @@ namespace alc {
                     bool anti_col_)
       : id(id_), job_id(job_id_), job_index(job_index_),
       cpu_req(cpu_req_), ram_req(ram_req_), anti_collocation(anti_col_) {
+    }
+
+    std::size_t requirement(hardware hw) const {
+      return (hw == CPU) ? cpu_req : ram_req;
     }
 
     friend bool operator==(const virtual_machine &x, const virtual_machine &y) {
