@@ -17,6 +17,12 @@ alc::solution alc::encoder::solution() {
   return {};
 }
 
+std::experimental::optional<std::list<std::int64_t>> alc::encoder::search() const {
+  return {};
+}
+
+
+
 void alc::encoder::encode_at_least_one_server_per_vm() {
   for (auto &vm: vms()) {
     alc::clause clause;

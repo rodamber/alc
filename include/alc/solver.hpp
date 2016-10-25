@@ -14,8 +14,7 @@ namespace alc {
     solver() = default;
 
     // Tries to solve the problem and returns a model if one is found.
-    std::list<std::int64_t> solve();
-
+    std::experimental::optional<std::list<std::int64_t>> solve();
 
     // Adds clauses to the solver. The argument will be emptied.
     // Complexity: O(1)
@@ -46,11 +45,6 @@ namespace alc {
 
     // The clauses.
     std::list<alc::clause> clauses_;
-
-  private:
-    // Uses a SAT solver to search for the minimum number of up servers.
-    // Returns the model if one is found.
-    std::experimental::optional<std::list<std::int64_t>> search() const;
 
   };
 

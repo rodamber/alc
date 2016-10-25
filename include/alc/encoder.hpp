@@ -1,5 +1,7 @@
 #pragma once
 
+#include <experimental/optional>
+
 #include <alc/problem.hpp>
 #include <alc/solver.hpp>
 
@@ -9,6 +11,10 @@ namespace alc {
   public:
 
     encoder(solver, problem);
+
+    // class servers_ {
+    //   servers_(int k_) : k(k_) { }
+    // };
 
     alc::solution solution();
 
@@ -61,6 +67,10 @@ namespace alc {
     void add_clause(alc::clause &&clause) {
       solver_.add_clause(std::move(clause));
     }
+
+    // Uses a SAT solver to search for the minimum number of up servers.
+    // Returns the model if one is found.
+    std::experimental::optional<std::list<std::int64_t>> search() const;
 
   };
 
