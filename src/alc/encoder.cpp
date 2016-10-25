@@ -2,6 +2,12 @@
 
 alc::encoder::encoder(alc::solver solver, alc::problem problem)
   : solver_(solver), problem_(problem) {
+  for (auto &vm: vms()) {
+    for (auto &server: servers()) {
+      // We don't need to store these because we can calculate them in O(1).
+      solver.new_var();
+    }
+  }
 }
 
 alc::solution alc::encoder::solution() {
