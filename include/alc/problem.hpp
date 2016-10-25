@@ -96,7 +96,7 @@ namespace alc {
   };
 
   // Answer to the problem.
-  struct answer {
+  struct solution {
     std::size_t min_server_count; // Minimum number of servers needed.
     std::vector<configuration> configurations; // Tells where is each VM.
   };

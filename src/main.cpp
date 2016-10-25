@@ -4,14 +4,16 @@
 #include <tuple>
 #include <vector>
 
+#include <alc/encoder.hpp>
 #include <alc/parser.hpp>
 #include <alc/problem.hpp>
 #include <alc/solver.hpp>
 
-std::ostream& operator<<(std::ostream& os, const alc::answer &answer) {
-  os << "o " << answer.min_server_count << "\n";
 
-  for (auto &config : answer.configurations) {
+std::ostream& operator<<(std::ostream& os, const alc::solution &solution) {
+  os << "o " << solution.min_server_count << "\n";
+
+  for (auto &config : solution.configurations) {
     os << config.job_id << " "
        << config.vm_index << " -> "
        << config.server_id << "\n";
@@ -29,18 +31,9 @@ int main(int argc, char* argv[]) {
   const std::string filename(argv[1]);
   std::ifstream infile(filename);
 
-  // encoder encoder;
-  // solver solver;
+  alc::encoder encoder(alc::solver(), alc::parse(infile));
 
-  // encoder.encode(solver, parse(infile));
-
-  // auto maybe_answer = solver.solve();
-
-  // if (maybe_answer) {
-  //   std::cout << *maybe_answer << std::flush;
-  // } else {
-  //   std::cout << "The solver has a bug..." << std::endl;
-  // }
+  std::cout << encoder.solution() << std::flush;
 
   return 0;
 }
