@@ -192,3 +192,12 @@ void at_most_one_test() {
 
   std::cout << "PASS" << std::endl;
 }
+
+// void sequential_weighted_counter_test() {
+//   std::cout << "=== SWC: ";
+
+
+
+
+//   std::cout << "PASS" << std::endl;
+// }

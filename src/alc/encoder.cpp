@@ -59,7 +59,7 @@ void alc::encoder::encode_sequential_weighted_counter(alc::hardware hw) {
     // Sequential weighted counter encoding table of auxiliary variables
     std::vector<std::vector<std::int64_t>> s_table(n + 1, std::vector<std::int64_t>(k + 1, 0));
 
-    // Fill table with minisat vars.
+    // Fill auxiliary table with minisat vars.
     for (std::size_t i = 0; i < n; ++i) {
       for (std::size_t j = 0; j < k; ++j) {
         s_table[i][j] = solver_.new_var();
