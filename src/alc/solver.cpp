@@ -9,10 +9,6 @@ std::experimental::optional<std::list<std::int64_t>> alc::solver::search() const
   return {};
 }
 
-void alc::solver::add_clauses(std::list<alc::clause> &clauses) {
-  add_clauses(clauses);
-}
-
-void alc::solver::add_clauses(std::list<alc::clause> &&clauses) {
-  clauses_.splice(clauses_.end(), clauses);
+void alc::solver::add_clause(alc::clause &&clause) {
+  clauses_.push_back(clause);
 }

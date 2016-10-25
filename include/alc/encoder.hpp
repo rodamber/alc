@@ -57,6 +57,11 @@ namespace alc {
     // The problem to encode and solve.
     problem problem_;
 
+  private:
+    void add_clause(alc::clause &&clause) {
+      solver_.add_clause(std::move(clause));
+    }
+
   };
 
 };

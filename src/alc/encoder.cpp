@@ -24,7 +24,8 @@ void alc::encoder::encode_at_least_one_server_per_vm() {
     for (auto &s: servers()) {
       clause.add(literal(vm, s));
     }
-    solver_.add_clauses({clause});
+
+    add_clause(std::move(clause));
   }
 }
 
@@ -34,12 +35,8 @@ void alc::encoder::encode_at_most_one_server_per_vm() {
     // Pay special atention to the iterators bounds!
     for (auto lhs_it = servers().begin(); lhs_it != servers().end() - 1; ++lhs_it) {
       for (auto rhs_it = lhs_it + 1; rhs_it != servers().end(); ++rhs_it) {
-        alc::clause clause;
-
-        clause.add(neg(literal(vm, *lhs_it)));
-        clause.add(neg(literal(vm, *rhs_it)));
-
-        solver_.add_clauses({clause});
+        add_clause({ neg(literal(vm, *lhs_it)),
+                     neg(literal(vm, *rhs_it)) });
       }
     }
   }
@@ -59,6 +56,16 @@ void alc::encoder::encode_sequential_weighted_counter(alc::hardware hw) {
     const std::size_t n = vms().size();
     const std::size_t k = servers().at(server.id).capacity(hw);
 
+    // Sequential weighted counter encoding table of auxiliary variables
+    std::vector<std::vector<std::int64_t>> s_table(n + 1, std::vector<std::int64_t>(k + 1, 0));
+
+    // Fill table with minisat vars.
+    for (std::size_t i = 0; i < n; ++i) {
+      for (std::size_t j = 0; j < k; ++j) {
+        s_table[i][j] = solver_.new_var();
+      }
+    }
+
     const auto x = [&](std::size_t i) { // get VM literal of column s.id, line i - 1
       return literal(i - 1, server.id);
     };
@@ -68,85 +75,37 @@ void alc::encoder::encode_sequential_weighted_counter(alc::hardware hw) {
       return vm.requirement(hw);
     };
 
-    // -------------------------------------------------------------------------
-
-    // Tabela de variaveis auxiliares.
-    std::vector<std::vector<std::int64_t>> s(n + 1, std::vector<std::int64_t>(k + 1, 0));
-
-    // Preencher tabela de vars auxiliares com os numeros das variaveis (para o minisat)
-    // Reparar que nao preenchem (0,j) (i,0) (apenas por comodidade).
-    for (std::size_t i = 1; i <= n; ++i) {
-      for (std::size_t j = 1; j <= k; ++j) {
-        s[i][j] = solver_.new_var();
-      }
-    }
+    const auto s = [&](std::size_t i) {
+      const auto s_j = [&](std::size_t j) {
+        return s_table[i - 1][j - 1];
+      };
+      return s_j;
+    };
 
     // -------------------------------------------------------------------------
 
+    // 1. x[i) => s[i)[j) | forall i, j: 1 <= i <= n, 1 <= j <= w[i)
+    for (std::size_t i = 1; i <= n; ++i)
+      for (std::size_t j = 1; j <= w(i); ++j)
+        add_clause({ neg(x(i)), s(i)(j) });
 
-    // 1. x[i] => s[i][j]                     !i,j. (1 <= i <= n, 1 <= j < = w[i])
-    // forall i, j: 1 <= i <= n,
-    //              1 <= j <= w[i]
-    for (std::size_t i = 1; i <= n; ++i) {
-      for (std::size_t j = 1; j <= w(i); ++j) {
-        alc::clause clause;
+    // 2. -s(1)(j) | forall j: w(1) < j <= k
+    for (std::size_t j = w(1) + 1; j <= k; ++j)
+      add_clause({ neg(s(1)(j)) });
 
-        clause.add(neg(x(i)));
-        clause.add(s[i][j]);
+    // 3. s(i-1)(j) => s(i)(j) | forall i, j: 2 <= i <= n, 1 <= j <= k
+    for (std::size_t i = 2; i <= n; ++i)
+      for (std::size_t j = 1; j <= k; ++j)
+        add_clause({ neg(s(i-1)(j)), s(i)(j) });
 
-        solver_.add_clauses({clause});
-      }
-    }
+    // 4. x(i) . s(i - 1)(j) => s(i)(j + w(i)) | forall i, j: 2 <= i <= n, 1 <= j <= k - w(i)
+    for (std::size_t i = 2; i <= n; ++i)
+      for (std::size_t j = 1; j <= k - w(i); ++j)
+        add_clause({ neg(x(i)), neg(s(i - 1)(j)), s(i)(j + w(i)) });
 
-    // 2. -s[1][j]
-    // forall j: w[1] < j <= k
-    for (std::size_t j = w(1) + 1; j <= k; ++j) {
-      alc::clause clause;
-
-      clause.add(neg(s[1][j]));
-
-      solver_.add_clauses({clause});
-    }
-
-    // 3. s[i-1][j] => s[i][j]
-    // forall i, j: 2 <= i <= n,
-    //              1 <= j <= k
-    for (std::size_t i = 2; i <= n; ++i) {
-      for (std::size_t j = 1; j <= k; ++j) {
-        alc::clause clause;
-
-        clause.add(neg(s[i-1][j]));
-        clause.add(s[i][j]);
-
-        solver_.add_clauses({clause});
-      }
-    }
-
-    // 4. x[i] . s[i - 1][j] => s[i][j + w[i]]
-    // forall i, j: 2 <= i <= n,
-    //              1 <= j <= k - w[i]
-    for (std::size_t i = 2; i <= n; ++i) {
-      for (std::size_t j = 1; j <= k - w(i); ++j) {
-        alc::clause clause;
-
-        clause.add(neg(x(i)));
-        clause.add(neg(s[i - 1][j]));
-        clause.add(s[i][j + w(i)]);
-
-        solver_.add_clauses({clause});
-      }
-    }
-
-    // 5. x[i] => s[i-1][k+1-w[i]]
-    // forall i: 2 <= i <= n
-    for (std::size_t i = 2; i <= n; ++i) {
-      alc::clause clause;
-
-      clause.add(neg(x(i)));
-      clause.add(s[i - 1][k + 1 - w(i)]);
-
-      solver_.add_clauses({clause});
-    }
+    // 5. x(i) => s(i-1)(k+1-w(i)) | forall i: 2 <= i <= n
+    for (std::size_t i = 2; i <= n; ++i)
+      add_clause({ neg(x(i)), s(i - 1)(k + 1 - w(i)) });
 
   }
 }

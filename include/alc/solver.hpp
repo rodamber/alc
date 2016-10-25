@@ -19,8 +19,7 @@ namespace alc {
 
     // Adds clauses to the solver. The argument will be emptied.
     // Complexity: O(1)
-    void add_clauses(std::list<alc::clause> &clauses);
-    void add_clauses(std::list<alc::clause> &&clauses);
+    void add_clause(alc::clause &&clause);
 
     inline std::int64_t new_var() {
       return ++var_count_;
