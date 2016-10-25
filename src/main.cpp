@@ -8,7 +8,7 @@
 #include <alc/problem.hpp>
 #include <alc/solver.hpp>
 
-void print_answer(std::ostream &os, alc::answer answer) {
+std::ostream& operator<<(std::ostream& os, const alc::answer &answer) {
   os << "o " << answer.min_server_count << "\n";
 
   for (auto &config : answer.configurations) {
@@ -17,7 +17,7 @@ void print_answer(std::ostream &os, alc::answer answer) {
        << config.server_id << "\n";
   }
 
-  os << std::flush;
+  return os;
 }
 
 int main(int argc, char* argv[]) {
@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
   // auto maybe_answer = solver.solve();
 
   // if (maybe_answer) {
-  //   print_answer(std::cout, *maybe_answer);
+  //   std::cout << *maybe_answer << std::flush;
   // } else {
   //   std::cout << "The solver has a bug..." << std::endl;
   // }
