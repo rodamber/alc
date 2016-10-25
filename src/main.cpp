@@ -4,11 +4,11 @@
 #include <tuple>
 #include <vector>
 
-#include <parser.hpp>
-#include <problem.hpp>
-#include <solver.hpp>
+#include <alc/parser.hpp>
+#include <alc/problem.hpp>
+#include <alc/solver.hpp>
 
-void print_answer(std::ostream &os, answer answer) {
+void print_answer(std::ostream &os, alc::answer answer) {
   os << "o " << answer.min_server_count << "\n";
 
   for (auto &config : answer.configurations) {

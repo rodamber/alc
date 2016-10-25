@@ -1,7 +1,7 @@
-#include <restrictions.hpp>
+#include <alc/restrictions.hpp>
 
 
-void at_least_one_constraint(std::ostream &os, const problem &prob) {
+void at_least_one_constraint(std::ostream &os, const alc::problem &prob) {
   for (std::size_t i = 0; i < prob.jobs.size(); ++i) {
     for (std::size_t j = 0; j < prob.jobs.at(i).vms.size(); ++j) {
       for (std::size_t k = 0; k < prob.servers.size(); ++k) {
@@ -12,7 +12,7 @@ void at_least_one_constraint(std::ostream &os, const problem &prob) {
   }
 }
 
-void at_most_one_constraint(std::ostream &os, const problem &prob) {
+void at_most_one_constraint(std::ostream &os, const alc::problem &prob) {
   for (std::size_t i = 0; i < prob.jobs.size(); ++i) {
     for (std::size_t j = 0; j < prob.jobs.at(i).vms.size(); ++j) {
       for (std::size_t k0 = 0; k0 < prob.servers.size() - 1; ++k0) {
@@ -25,15 +25,15 @@ void at_most_one_constraint(std::ostream &os, const problem &prob) {
   }
 }
 
-void cpu_constraint(std::ostream &os, const problem &prob) {
+void cpu_constraint(std::ostream &os, const alc::problem &prob) {
   (void) os; (void) prob;
 }
 
-void ram_constraint(std::ostream &os, const problem &prob) {
+void ram_constraint(std::ostream &os, const alc::problem &prob) {
   (void) os; (void) prob;
 }
 
-void anti_col_constraint(std::ostream &os, const problem &prob) {
+void anti_col_constraint(std::ostream &os, const alc::problem &prob) {
   (void) os; (void) prob;
   // std::vector<int> anti_col;
 

@@ -1,8 +1,8 @@
 #pragma once
 
-#include <problem.hpp>
+#include <alc/problem.hpp>
 
-problem spec_problem();
+alc::problem spec_problem();
 
 void parser_test();
 

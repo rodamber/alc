@@ -3,11 +3,11 @@
 # Declaration of variables
 CC = g++
 CC_FLAGS = -std=c++17 -Wall -Wextra -Wfatal-errors -Wno-unused-parameter -g \
-					 -I./lib -I./lib/headers
+					 -I../include
 
 # File names
 EXEC = proj1
-SOURCES = $(wildcard *.cpp lib/*.cpp)
+SOURCES = $(wildcard *.cpp alc/*.cpp)
 OBJECTS = $(SOURCES:.cpp=.o)
 
 # Main target

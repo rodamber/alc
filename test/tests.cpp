@@ -5,10 +5,12 @@
 #include <tuple>
 #include <vector>
 
-#include <restrictions.hpp>
-#include <parser.hpp>
+#include <alc/restrictions.hpp>
+#include <alc/parser.hpp>
 
 #include "tests.hpp"
+
+using namespace alc;
 
 int main() {
 

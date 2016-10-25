@@ -5,9 +5,9 @@
 #include <string>
 #include <string.h>
 
-#include <parser.hpp>
+#include <alc/parser.hpp>
 
-void parse_servers_spec(std::istream &infile, problem &prob) {
+void parse_servers_spec(std::istream &infile, alc::problem &prob) {
   std::string line;
   getline(infile, line);
   std::istringstream iss(line);
@@ -20,7 +20,7 @@ void parse_servers_spec(std::istream &infile, problem &prob) {
     getline(infile, line);
     iss = std::istringstream(line);
 
-    server s;
+    alc::server s;
     if(iss >> s.id >> s.cpu_cap >> s.ram_cap){
       prob.servers.push_back(s);
     }
@@ -28,7 +28,7 @@ void parse_servers_spec(std::istream &infile, problem &prob) {
 }
 
 
-void parse_vms_spec(std::istream &infile, problem &prob) {
+void parse_vms_spec(std::istream &infile, alc::problem &prob) {
 
   std::string line;
   getline(infile, line);
@@ -42,13 +42,13 @@ void parse_vms_spec(std::istream &infile, problem &prob) {
     std::istringstream iss(line);
     iss >> job_id >> job_index >> cpu_req >> ram_req >> anti_collocation;
 
-    prob.vms.push_back(virtual_machine(id++, job_id, job_index, cpu_req, ram_req,
-                                       (anti_collocation == "True")));
+    prob.vms.push_back(alc::virtual_machine(id++, job_id, job_index, cpu_req, ram_req,
+                                            (anti_collocation == "True")));
   }
 
 }
 
-void create_h(problem &prob) {
+void create_h(alc::problem &prob) {
 
   std::size_t job_id = 0;
 
@@ -63,8 +63,8 @@ void create_h(problem &prob) {
 
 }
 
-problem parse(std::istream &infile) {
-  problem prob;
+alc::problem alc::parse(std::istream &infile) {
+  alc::problem prob;
 
   parse_servers_spec(infile, prob);
   parse_vms_spec(infile, prob);
