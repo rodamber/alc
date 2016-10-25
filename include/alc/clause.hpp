@@ -1,7 +1,17 @@
 #pragma once
 
+#include <cstdint>
+#include <list>
+
+
 namespace alc {
 
-  using clause = std::list<std::size_t>;
+  struct clause {
+    std::list<std::int64_t> literals;
+
+    void add(std::int64_t literal) {
+      literals.push_back(literal);
+    }
+  };
 
 };

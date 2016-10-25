@@ -14,6 +14,19 @@ namespace alc {
 
     alc::solution solution();
 
+    // Gets the sat solver integer variable corresponding to the given pair (VM, Server)
+    inline int literal(virtual_machine vm, server s) {
+      return vm.id * servers().size() + s.id + 1;
+    }
+
+    inline std::vector<server> &servers() {
+      return problem_.servers;
+    }
+
+    inline std::vector<virtual_machine> &vms() {
+      return problem_.vms;
+    }
+
   protected:
 
     inline void encode(solver solver) {

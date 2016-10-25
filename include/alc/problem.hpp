@@ -40,7 +40,7 @@ namespace alc {
         && x.anti_collocation == y.anti_collocation;
     }
 
-    std::size_t id;
+    std::size_t id; // Identifies a VM in the set of all VMs.
 
     std::size_t job_id;
     std::size_t job_index;

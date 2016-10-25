@@ -1,10 +1,12 @@
 #include <cassert>
+#include <cstdint>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <tuple>
 #include <vector>
 
+#include <alc/encoder.hpp>
 #include <alc/restrictions.hpp>
 #include <alc/parser.hpp>
 
@@ -64,112 +66,98 @@ void parser_test() {
 void literal_conversion_test() {
   std::cout << "=== LITERAL CONVERSION: ";
 
-  problem prob = spec_problem();
+  encoder encoder(solver(), spec_problem());
 
-  // for (std::size_t ix = 0; ix < prob.h.size(); ++ix) {
-  //   std::cout << "h[" << ix << "] = "  << prob.h[ix] << std::endl;
-  // }
+  std::int64_t x = 1;
 
-  int x = 1;
+  for (auto &vm: encoder.vms()) {
+    for (auto &s: encoder.servers()) {
+      // std::cout << "literal(" << vm.id << ", " << s.id << ") = "
+      //           << encoder.literal(vm, s) << "; x = " << x << std::endl;
 
-  for (std::size_t i = 0; i < prob.jobs.size(); ++i) {
-    for (std::size_t j = 0; j < prob.jobs.at(i).vms.size(); ++j) {
-      for (std::size_t k = 0; k < prob.servers.size(); ++k) {
-
-        // std::cout << "literal_to_int(prob, " << i << ", " << j << ", " << k << ") = "
-        //           << literal_to_int(prob, i, j, k) << std::endl;
-
-        // auto ijk = int_to_literal(prob, x);
-        // std::cout << "int_to_literal(prob, " << x << ") = "
-        //           << "("  << std::get<0>(ijk)
-        //           << ", " << std::get<1>(ijk)
-        //           << ", " << std::get<2>(ijk)
-        //           << ")"  << std::endl;
-
-        assert(literal_to_int(prob, i, j, k) == x);
-        assert(int_to_literal(prob, x) == std::make_tuple(i, j, k));
-
-        ++x;
-      }
-    }
-  }
-
-  std::cout << "PASS" << std::endl;
-}
-
-void at_least_one_test() {
-  std::cout << "=== AT LEAST ONE: ";
-
-  problem prob = spec_problem();
-
-  std::size_t vms_count = 0;
-  for (auto &j: prob.jobs) {
-    vms_count += j.vms.size();
-  }
-
-  int x = 1;
-  std::ostringstream test;
-
-  for (std::size_t ix = 0; ix < vms_count; ++ix) {
-    for (std::size_t jx = 0; jx < prob.servers.size(); ++jx, ++x) {
-      test << x << dimacs::sep;
-    }
-    test << dimacs::nl;
-  }
-
-  std::ostringstream out;
-  at_least_one_constraint(out, prob);
-
-  // std::cout << "TEST\n"
-  //           << "====" << std::endl;
-
-  // std::cout << test.str() << std::endl;
-
-  // std::cout << "OUT\n"
-  //           << "===" << std::endl;
-
-  // std::cout << out.str() << std::endl;
-
-  assert(test.str() == out.str());
-
-  std::cout << "PASS" << std::endl;
-}
-
-void at_most_one_test() {
-  std::cout << "=== AT MOST ONE: ";
-
-  problem prob = spec_problem();
-
-  int x = 1;
-  std::ostringstream test;
-
-  for (std::size_t i = 0; i < prob.jobs.size(); ++i) {
-    for (std::size_t j = 0; j < prob.jobs.at(i).vms.size(); ++j) {
-      int y = x;
-      for (std::size_t k0 = 0; k0 < prob.servers.size() - 1; ++k0, ++x) {
-        for (std::size_t k1 = k0 + 1; k1 < prob.servers.size(); ++k1) {
-          test << -1 * (int)(y + k0) << dimacs::sep;
-          test << -1 * (int)(y + k1) << dimacs::nl;
-        }
-      }
+      assert(encoder.literal(vm, s) == x);
       ++x;
     }
   }
 
-  std::ostringstream out;
-  at_most_one_constraint(out, prob);
 
-  // std::cout << "TEST\n"
-  //           << "====" << std::endl;
-
-  // std::cout << test.str() << std::endl;
-
-  // std::cout << "OUT\n"
-  //           << "===" << std::endl;
-
-  // std::cout << out.str() << std::endl;
-
-  assert(test.str() == out.str());
+  // assert(literal_to_int(prob, i, j, k) == x);
+  // assert(int_to_literal(prob, x) == std::make_tuple(i, j, k));
 
   std::cout << "PASS" << std::endl;
 }
+
+// void at_least_one_test() {
+//   std::cout << "=== AT LEAST ONE: ";
+
+//   encoder encoder(solver(), spec_problem());
+
+//   const std::size_t vms_count = encoder.vms().size();
+//   const std::size_t servers_count = encoder.vms().size();
+
+//   int x = 1;
+//   std::ostringstream test;
+
+//   for (std::size_t ix = 0; ix < vms_count; ++ix) {
+//     for (std::size_t jx = 0; jx < servers_count; ++jx, ++x) {
+//       test << x << dimacs::sep;
+//     }
+//     test << dimacs::nl;
+//   }
+
+//   std::ostringstream out;
+//   at_least_one_constraint(out, prob);
+
+//   // std::cout << "TEST\n"
+//   //           << "====" << std::endl;
+
+//   // std::cout << test.str() << std::endl;
+
+//   // std::cout << "OUT\n"
+//   //           << "===" << std::endl;
+
+//   // std::cout << out.str() << std::endl;
+
+//   assert(test.str() == out.str());
+
+//   std::cout << "PASS" << std::endl;
+// }
+
+// void at_most_one_test() {
+//   std::cout << "=== AT MOST ONE: ";
+
+//   problem prob = spec_problem();
+
+//   int x = 1;
+//   std::ostringstream test;
+
+//   for (std::size_t i = 0; i < prob.jobs.size(); ++i) {
+//     for (std::size_t j = 0; j < prob.jobs.at(i).vms.size(); ++j) {
+//       int y = x;
+//       for (std::size_t k0 = 0; k0 < prob.servers.size() - 1; ++k0, ++x) {
+//         for (std::size_t k1 = k0 + 1; k1 < prob.servers.size(); ++k1) {
+//           test << -1 * (int)(y + k0) << dimacs::sep;
+//           test << -1 * (int)(y + k1) << dimacs::nl;
+//         }
+//       }
+//       ++x;
+//     }
+//   }
+
+//   std::ostringstream out;
+//   at_most_one_constraint(out, prob);
+
+//   // std::cout << "TEST\n"
+//   //           << "====" << std::endl;
+
+//   // std::cout << test.str() << std::endl;
+
+//   // std::cout << "OUT\n"
+//   //           << "===" << std::endl;
+
+//   // std::cout << out.str() << std::endl;
+
+//   assert(test.str() == out.str());
+
+//   std::cout << "PASS" << std::endl;
+// }

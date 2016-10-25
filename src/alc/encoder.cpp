@@ -10,8 +10,14 @@ alc::solution alc::encoder::solution() {
 }
 
 void alc::encoder::encode_at_least_one_server_per_vm(alc::solver solver) {
-  // FIXME
-  return;
+  for (auto &vm: vms()) {
+    alc::clause clause;
+
+    for (auto &s: servers()) {
+      clause.add(literal(vm, s));
+    }
+    solver.add_clauses({clause});
+  }
 }
 
 void alc::encoder::encode_at_most_one_server_per_vm(alc::solver solver) {
