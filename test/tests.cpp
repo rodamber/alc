@@ -16,6 +16,10 @@ int main() {
   std::cout << "NDEBUG is defined" << std::endl;
 #endif
 
+  std::cout << "TEST" << std::endl
+            << "====" << std::endl;
+
+  parser_test();
   literal_conversion_test();
   at_least_one_test();
   at_most_one_test();
@@ -24,31 +28,39 @@ int main() {
 }
 
 problem spec_problem() {
+
   const server s0(0, 5, 2), s1(1, 4, 1), s2(2, 7, 3), s3(3, 8, 5);
   std::vector<server> servers {s0, s1, s2, s3};
 
-  const virtual_machine
-    v0(0, 1, 1, true), v1(1, 1, 1, true), v2(0, 1, 1, false),
-    v3(0, 1, 1, true), v4(1, 1, 1, true), v5(2, 1, 1, false),
-    v6(0, 1, 1, true), v7(1, 1, 1, true);
+  virtual_machine
+    v0(0, 0, 0, 1, 1, true), v1(1, 0, 1, 1, 1, true), v2(2, 1, 0, 1, 1, false),
+    v3(3, 2, 0, 1, 1, true), v4(4, 2, 1, 1, 1, true), v5(5, 2, 2, 1, 1, false),
+    v6(6, 3, 0, 1, 1, true), v7(7, 3, 1, 1, 1, true);
+
   std::vector<virtual_machine> vms {v0, v1, v2, v3, v4, v5, v6, v7};
 
-  const job j0(0, {v0, v1}), j1(1, {v2}), j2(2, {v3, v4, v5}), j3(3, {v6, v7});
-  std::vector<job> jobs {j0, j1, j2, j3};
+  std::vector<std::size_t> h { 0, 2, 3, 6 };
 
-  std::vector<std::size_t> h(1, 0);
-  for (std::size_t i = 1; i < jobs.size(); ++i) {
-    h.push_back(h[i - 1] + jobs[i - 1].vms.size());
-  }
+  return problem(servers, vms, h);
 
-  return problem(servers, jobs, h);
 }
 
 void parser_test() {
+
+  std::cout << "PARSER TEST" << std::endl
+            << "===========" << std::endl;
+
   std::string input_filename = "../input/01.in";
   std::ifstream infile(input_filename);
 
-  assert(parse(infile) == spec_problem());
+  problem parsed_problem = parse(infile);
+  problem spec = spec_problem();
+
+  assert(parsed_problem.servers == spec.servers);
+  assert(parsed_problem.vms == spec.vms);
+  assert(parsed_problem.h == spec.h);
+  assert(parsed_problem == spec);
+
 }
 
 void literal_conversion_test() {

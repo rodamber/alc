@@ -29,50 +29,38 @@ void parse_servers_spec(std::istream &infile, problem &prob) {
 
 
 void parse_vms_spec(std::istream &infile, problem &prob) {
+
   std::string line;
   getline(infile, line);
-  std::istringstream iss(line);
 
-  size_t num_vms;
-  if(iss >> num_vms) {
-  }
+  std::size_t id = 0;
 
-  size_t prev_job_id = 0;
-  size_t current_job_id = 0;
+  while (getline(infile, line)) {
+    std::size_t job_id, job_index, cpu_req, ram_req;
+    std::string anti_collocation;
 
-  for (size_t i = 0; i < num_vms; i++){
-    getline(infile, line);
-    iss = std::istringstream(line);
+    std::istringstream iss(line);
+    iss >> job_id >> job_index >> cpu_req >> ram_req >> anti_collocation;
 
-    job j;
-    if ((iss >> current_job_id) && (prev_job_id != current_job_id)){
-      prob.jobs.push_back(j);
-
-      prev_job_id = current_job_id;
-      j.vms = std::vector<virtual_machine>();
-    }
-
-    virtual_machine vm;
-    std::string anti_col;
-
-    j.id = current_job_id;
-    iss >> vm.id >> vm.cpu_req >> vm.ram_req >> anti_col;
-    vm.anti_col = (anti_col == "True");
-
-    j.vms.push_back(vm);
-
-    if (i + 1 == num_vms) {
-      prob.jobs.push_back(j);
-    }
+    prob.vms.push_back(virtual_machine(id++, job_id, job_index, cpu_req, ram_req,
+                                       (anti_collocation == "True")));
   }
 
 }
 
 void create_h(problem &prob) {
-  for (std::size_t i = 1; i < prob.jobs.size(); ++i) {
-    const auto accum = prob.h[i - 1] + prob.jobs[i - 1].vms.size();
-    prob.h.push_back(accum);
+
+  std::size_t job_id = 0;
+
+  prob.h.push_back(0);
+
+  for (auto &vm : prob.vms) {
+    if (vm.job_id != job_id) {
+      job_id = vm.job_id;
+      prob.h.push_back(vm.id);
+    }
   }
+
 }
 
 problem parse(std::istream &infile) {
