@@ -1,8 +1,6 @@
 #pragma once
 
-#include "problem.hpp"
-
-void run_tests();
+#include <problem.hpp>
 
 problem spec_problem();
 

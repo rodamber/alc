@@ -5,7 +5,7 @@
 #include <string>
 #include <string.h>
 
-#include "parser.hpp"
+#include <parser.hpp>
 
 void parse_servers_spec(std::istream &infile, problem &prob) {
   std::string line;

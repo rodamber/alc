@@ -5,7 +5,7 @@
 #include <string>
 #include <tuple>
 
-#include "problem.hpp"
+#include <problem.hpp>
 
 namespace dimacs {
   const std::string sep = " ";

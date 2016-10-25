@@ -5,14 +5,22 @@
 #include <tuple>
 #include <vector>
 
-#include "tests.hpp"
-#include "restrictions.hpp"
-#include "parser.hpp"
+#include <restrictions.hpp>
+#include <parser.hpp>
 
-void run_tests() {
+#include "tests.hpp"
+
+int main() {
+
+#ifdef NDEBUG
+  std::cout << "NDEBUG is defined" << std::endl;
+#endif
+
   literal_conversion_test();
   at_least_one_test();
   at_most_one_test();
+
+  return 0;
 }
 
 problem spec_problem() {

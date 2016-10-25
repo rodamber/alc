@@ -4,10 +4,8 @@
 #include <tuple>
 #include <vector>
 
-#include "parser.hpp"
-#include "problem.hpp"
-
-#include "tests.hpp"
+#include <parser.hpp>
+#include <problem.hpp>
 
 // Returns if the problem is SAT or UNSAT
 bool solve(const problem &prob) {
@@ -27,9 +25,6 @@ size_t search(const problem &prob, answer &ans) {
 }
 
 int main(int argc, char* argv[]) {
-#ifndef NDEBUG
-  run_tests();
-#else
   if (argc < 2 || (argc == 2 && std::string(argv[1]) == "--help")) {
     std::cout << "USAGE: proj1 <scenario-file-name>" << std::endl;
     return 0;
@@ -39,6 +34,5 @@ int main(int argc, char* argv[]) {
   std::ifstream infile(filename);
 
   problem prob = parse(infile);
-#endif
   return 0;
 }
