@@ -59,17 +59,20 @@ void alc::encoder::encode_at_most_one_server_per_vm() {
 }
 
 void alc::encoder::encode_at_most_one_anti_collocation_vm_per_job_per_server() {
-  for (auto &s: servers()) {
-    for (auto job_it = vms().begin(),
-           end_ = job_it + problem_.job_sizes.at(job_it->job_id);
-         job_it != vms().end();
-         job_it += problem_.job_sizes.at(job_it->job_id)) {
-      for (auto lhs = job_it; lhs != end_ - 1; ++lhs) {
-        if (!(lhs->anti_collocation)) {
-          continue;
-        }
-        for (auto rhs = lhs + 1; rhs != end_; ++rhs) {
-          if (rhs->anti_collocation) {
+  for (auto job_it = vms().begin();
+       job_it != vms().end();
+       job_it += problem_.job_sizes.at(job_it->job_id)) {
+    for (auto lhs = job_it;
+         lhs != job_it + problem_.job_sizes.at(lhs->job_id) - 1;
+         ++lhs) {
+      if (!(lhs->anti_collocation)) {
+        continue;
+      }
+      for (auto rhs = lhs + 1;
+           rhs != job_it + problem_.job_sizes.at(lhs->job_id);
+           ++rhs) {
+        if (rhs->anti_collocation) {
+          for (auto &s: servers()) {
             add_clause({ neg(literal(*lhs, s)), neg(literal(*rhs, s)) });
           }
         }

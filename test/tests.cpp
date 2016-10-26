@@ -22,6 +22,7 @@ int main() {
   literal_conversion_test();
   at_least_one_test();
   at_most_one_test();
+  anti_col_test();
 
   return 0;
 }
@@ -184,6 +185,49 @@ void at_most_one_test() {
   // std::cout << out.str() << std::endl;
 
   assert(test.str() == out.str());
+
+  std::cout << "PASS" << std::endl;
+}
+
+void anti_col_test() {
+  std::cout << "=== ANTI COL: ";
+
+  problem problem = spec_problem();
+  encoder encoder(solver(), problem);
+
+  std::ostringstream test;
+
+  test << -1 << dimacs::sep << -5 << " " << dimacs::nl;
+  test << -2 << dimacs::sep << -6 << " " << dimacs::nl;
+  test << -3 << dimacs::sep << -7 << " " << dimacs::nl;
+  test << -4 << dimacs::sep << -8 << " " << dimacs::nl;
+  test << -13 << dimacs::sep << -17 << " " << dimacs::nl;
+  test << -14 << dimacs::sep << -18 << " " << dimacs::nl;
+  test << -15 << dimacs::sep << -19 << " " << dimacs::nl;
+  test << -16 << dimacs::sep << -20 << " " << dimacs::nl;
+  test << -25 << dimacs::sep << -29 << " " << dimacs::nl;
+  test << -26 << dimacs::sep << -30 << " " << dimacs::nl;
+  test << -27 << dimacs::sep << -31 << " " << dimacs::nl;
+  test << -28 << dimacs::sep << -32 << " " << dimacs::nl;
+
+  std::ostringstream out;
+
+  encoder.encode_at_most_one_anti_collocation_vm_per_job_per_server();
+  out << encoder.clauses();
+
+  std::cout << "TEST\n"
+            << "====" << std::endl;
+
+  std::cout << test.str() << std::endl;
+
+  std::cout << "OUT\n"
+      << "===" << std::endl;
+
+  std::cout << out.str() << std::endl;
+
+
+  assert(test.str() == out.str());
+
 
   std::cout << "PASS" << std::endl;
 }
