@@ -6,6 +6,7 @@
 #include <sstream>
 #include <vector>
 
+#include <util.hpp>
 #include <alc/encoder.hpp>
 #include <alc/parser.hpp>
 
@@ -23,6 +24,7 @@ int main() {
   at_least_one_test();
   at_most_one_test();
   anti_col_test();
+  combinations_test();
 
   return 0;
 }
@@ -215,15 +217,15 @@ void anti_col_test() {
   encoder.encode_at_most_one_anti_collocation_vm_per_job_per_server();
   out << encoder.clauses();
 
-  std::cout << "TEST\n"
-            << "====" << std::endl;
+  // std::cout << "TEST\n"
+  //           << "====" << std::endl;
 
-  std::cout << test.str() << std::endl;
+  // std::cout << test.str() << std::endl;
 
-  std::cout << "OUT\n"
-      << "===" << std::endl;
+  // std::cout << "OUT\n"
+  //     << "===" << std::endl;
 
-  std::cout << out.str() << std::endl;
+  // std::cout << out.str() << std::endl;
 
 
   assert(test.str() == out.str());
@@ -232,11 +234,31 @@ void anti_col_test() {
   std::cout << "PASS" << std::endl;
 }
 
-// void sequential_weighted_counter_test() {
-//   std::cout << "=== SWC: ";
+void combinations_test() {
+  std::cout << "=== COMBS: ";
+  std::ostringstream test;
 
+  test << 0 << 1 << 2 << std::endl
+       << 0 << 1 << 3 << std::endl
+       << 0 << 1 << 4 << std::endl
+       << 0 << 2 << 3 << std::endl
+       << 0 << 2 << 4 << std::endl
+       << 0 << 3 << 4 << std::endl
+       << 1 << 2 << 3 << std::endl
+       << 1 << 2 << 4 << std::endl
+       << 1 << 3 << 4 << std::endl
+       << 2 << 3 << 4 << std::endl;
 
+  std::ostringstream out;
 
+  for (auto c: combinations(5, 3)) {
+    for (auto x: c) {
+      out << x;
+    }
+    out << std::endl;
+  }
 
-//   std::cout << "PASS" << std::endl;
-// }
+  assert(test.str() == out.str());
+
+  std::cout << "PASS" << std::endl;
+}

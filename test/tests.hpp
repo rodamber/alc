@@ -12,3 +12,5 @@ void at_most_one_test();
 void anti_col_test();
 
 void sequential_weighted_counter_test();
+
+void combinations_test();
