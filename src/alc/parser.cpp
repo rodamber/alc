@@ -48,19 +48,18 @@ void parse_vms_spec(std::istream &infile, alc::problem &prob) {
 
 }
 
-void create_h(alc::problem &prob) {
-
+void fill_job_sizes(alc::problem &prob) {
   std::size_t job_id = 0;
 
-  prob.h.push_back(0);
-
-  for (auto &vm : prob.vms) {
-    if (vm.job_id != job_id) {
-      job_id = vm.job_id;
-      prob.h.push_back(vm.id);
+  for (auto vm_it = prob.vms.begin(); vm_it != prob.vms.end(); ++vm_it) {
+    if (vm_it->job_id != job_id) {
+      job_id = vm_it->job_id;
+      prob.job_sizes.push_back(std::prev(vm_it)->job_index + 1);
     }
   }
 
+  const auto last_vm_it = prob.vms.end() - 1;
+  prob.job_sizes.push_back(last_vm_it->job_index + 1);
 }
 
 alc::problem alc::parse(std::istream &infile) {
@@ -68,7 +67,7 @@ alc::problem alc::parse(std::istream &infile) {
 
   parse_servers_spec(infile, prob);
   parse_vms_spec(infile, prob);
-  create_h(prob);
+  fill_job_sizes(prob);
 
   return prob;
 }

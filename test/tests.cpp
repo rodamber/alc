@@ -56,9 +56,9 @@ problem spec_problem() {
 
   std::vector<virtual_machine> vms {v0, v1, v2, v3, v4, v5, v6, v7};
 
-  std::vector<std::size_t> h { 0, 2, 3, 6 };
+  std::vector<std::size_t> job_sizes { 2, 1, 3, 2 };
 
-  return problem(servers, vms, h);
+  return problem(servers, vms, job_sizes);
 
 }
 
@@ -74,7 +74,7 @@ void parser_test() {
 
   assert(parsed_problem.servers == spec.servers);
   assert(parsed_problem.vms == spec.vms);
-  assert(parsed_problem.h == spec.h);
+  assert(parsed_problem.job_sizes == spec.job_sizes);
   assert(parsed_problem == spec);
 
   std::cout << "PASS" << std::endl;

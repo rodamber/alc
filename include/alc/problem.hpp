@@ -66,19 +66,19 @@ namespace alc {
     problem() = default;
     problem(const std::vector<server> &servers_,
             const std::vector<virtual_machine> &vms_,
-            const std::vector<std::size_t> &h_)
-      : servers(servers_), vms(vms_), h(h_) {
+            const std::vector<std::size_t> &job_sizes_)
+      : servers(servers_), vms(vms_), job_sizes(job_sizes_) {
     }
 
     friend bool operator==(const problem &x, const problem &y) {
       return x.servers == y.servers
         && x.vms == y.vms
-        && x.h == y.h;
+        && x.job_sizes == y.job_sizes;
     }
 
     std::vector<server> servers;
     std::vector<virtual_machine> vms;
-    std::vector<std::size_t> h;
+    std::vector<std::size_t> job_sizes;
   };
 
   // A triple representing in which server is a certain VM.
