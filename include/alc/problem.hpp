@@ -62,20 +62,6 @@ namespace alc {
 
   };
 
-  struct job {
-    job() = default;
-    job(std::size_t id_, const std::vector<virtual_machine> &vms_)
-      : id(id_), vms(vms_) {
-    }
-
-    friend bool operator==(const job &x, const job &y) {
-      return x.id == y.id && x.vms == y.vms;
-    }
-
-    std::size_t id;
-    std::vector<virtual_machine> vms;
-  };
-
   struct problem {
     problem() = default;
     problem(const std::vector<server> &servers_,
@@ -93,9 +79,6 @@ namespace alc {
     std::vector<server> servers;
     std::vector<virtual_machine> vms;
     std::vector<std::size_t> h;
-
-    // FIXME
-    std::vector<job> jobs;
   };
 
   // A triple representing in which server is a certain VM.

@@ -33,14 +33,6 @@ namespace dimacs {
 
 template <class T>
 std::ostream &operator<<(std::ostream& os, const std::list<std::list<T>> ll) {
-  // const std::size_t var_count =
-  //   std::accumulate(ll.begin(), ll.end(), 0, [](std::size_t lhs, std::list<T> rhs) {
-  //       return lhs + rhs.size();
-  //     });
-  // const std::size_t clause_count = ll.size();
-
-  // os << "p cnf " << var_count << " " << clause_count << "\n";
-
   for (auto &l: ll) {
     for (auto &x: l) {
       os << x << " ";

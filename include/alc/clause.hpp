@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <initializer_list>
+#include <iostream>
 #include <list>
 
 
@@ -16,8 +17,6 @@ namespace alc {
     clause(std::initializer_list<std::int64_t> lits) : literals(lits) { }
 
 
-    std::list<std::int64_t> literals;
-
     void add(std::initializer_list<std::int64_t> &&lits) {
       literals.splice(literals.end(), lits);
     }
@@ -25,6 +24,21 @@ namespace alc {
     void add(std::int64_t literal) {
       literals.push_back(literal);
     }
+
+    inline std::size_t size() const {
+      return literals.size();
+    }
+
+    friend std::ostream &operator<<(std::ostream &os, const clause &c) {
+      for (auto &lit: c.literals) {
+        os << lit << " ";
+      }
+      return (os << " 0\n");
+    }
+
+
+    std::list<std::int64_t> literals;
+
   };
 
 };

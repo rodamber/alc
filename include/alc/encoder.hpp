@@ -1,6 +1,7 @@
 #pragma once
 
 #include <experimental/optional>
+#include <iostream>
 
 #include <alc/problem.hpp>
 #include <alc/solver.hpp>
@@ -54,6 +55,8 @@ namespace alc {
     void encode_at_most_one_server_per_vm();
     void encode_not_exceeding_server_capacity(hardware);
     void encode_sequential_weighted_counter(hardware);
+
+    void write_dimacs_cnf(std::ostream &os);
 
   private:
     // The solver used to get to the solution.

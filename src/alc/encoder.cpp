@@ -7,7 +7,7 @@ alc::encoder::encoder(alc::solver solver, alc::problem problem)
   for (auto &vm: vms()) {
     for (auto &server: servers()) {
       // We don't need to store these because we can calculate them in O(1).
-      solver.new_var();
+      solver_.new_var();
     }
   }
 }
@@ -18,6 +18,7 @@ alc::solution alc::encoder::solution() {
 }
 
 std::experimental::optional<std::list<std::int64_t>> alc::encoder::search() const {
+  // FIXME
   return {};
 }
 
@@ -114,4 +115,8 @@ void alc::encoder::encode_sequential_weighted_counter(alc::hardware hw) {
       add_clause({ neg(x(i)), s(i - 1)(k + 1 - w(i)) });
 
   }
+}
+
+void alc::encoder::write_dimacs_cnf(std::ostream &os) {
+  solver_.write_dimacs_cnf(os);
 }
