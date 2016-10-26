@@ -44,13 +44,7 @@ namespace alc {
       return solver_.clauses();
     }
 
-    inline void encode() {
-      encode_at_least_one_server_per_vm();
-      encode_at_most_one_server_per_vm();
-      encode_not_exceeding_server_capacity(CPU);
-      encode_not_exceeding_server_capacity(RAM);
-    }
-
+    void encode();
     void encode_at_least_one_server_per_vm();
     void encode_at_most_one_server_per_vm();
     void encode_not_exceeding_server_capacity(hardware);

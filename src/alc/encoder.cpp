@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <vector>
 
 #include <alc/encoder.hpp>
@@ -23,6 +24,13 @@ std::experimental::optional<std::list<std::int64_t>> alc::encoder::search() cons
 }
 
 
+
+void alc::encoder::encode() {
+  encode_at_least_one_server_per_vm();
+  encode_at_most_one_server_per_vm();
+  encode_not_exceeding_server_capacity(CPU);
+  encode_not_exceeding_server_capacity(RAM);
+}
 
 void alc::encoder::encode_at_least_one_server_per_vm() {
   for (auto &vm: vms()) {
