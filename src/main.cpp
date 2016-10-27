@@ -6,6 +6,7 @@
 
 #include <alc/encoder.hpp>
 #include <alc/parser.hpp>
+#include <alc/polynomial_solver.hpp>
 #include <alc/problem.hpp>
 #include <alc/solver.hpp>
 
@@ -31,14 +32,16 @@ int main(int argc, char* argv[]) {
   const std::string filename(argv[1]);
   std::ifstream infile(filename);
 
-  alc::encoder encoder(alc::parse(infile));
+  alc::problem problem(alc::parse(infile));
 
+
+  if (problem.easy) {
+    alc::polynomial_solver solver(problem);
+    std::cout << solver.solution() << std::flush;
+  } else {
+    alc::encoder encoder(problem);
     std::cout << encoder.solution() << std::flush;
-  // try {
-  //   std::cout << encoder.solution() << std::flush;
-  // } catch (const std::exception& e) {
-  //   std::cout << e.what() << std::endl;
-  // }
+  }
 
   return 0;
 }

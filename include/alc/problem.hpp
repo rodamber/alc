@@ -79,6 +79,10 @@ namespace alc {
     std::vector<server> servers;
     std::vector<virtual_machine> vms;
     std::vector<std::size_t> job_sizes;
+
+    // Tells wether the problem can be solved in polynomial time.
+    // Assume it is true.
+    bool easy = true;
   };
 
   // A triple representing in which server is a certain VM.

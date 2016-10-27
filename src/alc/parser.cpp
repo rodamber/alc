@@ -42,6 +42,10 @@ void parse_vms_spec(std::istream &infile, alc::problem &prob) {
     std::istringstream iss(line);
     iss >> job_id >> job_index >> cpu_req >> ram_req >> anti_collocation;
 
+    if (cpu_req > 1 || ram_req > 1) {
+      prob.easy = false;
+    }
+
     prob.vms.push_back(alc::virtual_machine(id++, job_id, job_index, cpu_req, ram_req,
                                             (anti_collocation == "True")));
   }
