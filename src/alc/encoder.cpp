@@ -9,14 +9,19 @@ alc::encoder::encoder(alc::problem problem)
 }
 
 alc::solution alc::encoder::solution() {
-  auto answer = *search();
+  auto maybe_answer = search();
+
+  if (!(maybe_answer)) {
+    throw std::runtime_error("The program has a bug, got no solution!");
+  }
+
+  auto answer = *maybe_answer;
 
   std::vector<std::pair<alc::virtual_machine, alc::server>> pairs_vm_server;
 
-  std::transform(answer.begin(), answer.end(), pairs_vm_server.begin(),
-                 [&](std::int64_t x) {
-                   return from_literal(x);
-                 });
+  for (auto x: answer) {
+    pairs_vm_server.push_back(from_literal(x));
+  }
 
   std::vector<alc::configuration> configurations;
 
@@ -28,39 +33,41 @@ alc::solution alc::encoder::solution() {
 }
 
 std::experimental::optional<std::list<std::int64_t>> alc::encoder::search() {
-  for (size_t k = servers().size(); /* FIXME */ k > 0; --k) {
-    std::experimental::optional<std::list<std::int64_t>> model;
+  encode();
+  return solver_.solve();
+  // for (size_t k = servers().size(); /* FIXME */ k > 0; --k) {
+  //   std::experimental::optional<std::list<std::int64_t>> model;
 
-    combination_generator generate(servers().size(), k);
-    std::vector<int> combination;
+  //   combination_generator generate(servers().size(), k);
+  //   std::vector<int> combination;
 
-    bool sat = false;
+  //   bool sat = false;
 
-    while (!((combination = generate()).empty()) && !sat) {
-      considered_servers(combination);
-      encode();
+  //   while (!((combination = generate()).empty()) && !sat) {
+  //     considered_servers(combination);
+  //     encode();
 
-      auto maybe_new_model = solver_.solve();
+  //     auto maybe_new_model = solver_.solve();
 
-      if (maybe_new_model) {
-        // We found a solution with k servers, so let's check if there is a
-        // better one.
-        model = maybe_new_model;
-        sat = true;
-      }
-    }
+  //     if (maybe_new_model) {
+  //       // We found a solution with k servers, so let's check if there is a
+  //       // better one.
+  //       model = maybe_new_model;
+  //       sat = true;
+  //     }
+  //   }
 
-    if (!sat && model) {
-      return model;
-    }
-  }
-  return {};
+  //   if (!sat && model) {
+  //     return model;
+  //   }
+  // }
+  // return {};
 }
 
 
 
 void alc::encoder::encode() {
-  solver_ = solver();
+  solver_ = alc::solver();
 
   for (auto &vm: vms()) {
     for (auto &server: servers()) {

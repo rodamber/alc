@@ -16,6 +16,10 @@ namespace alc {
 
     clause(std::initializer_list<std::int64_t> lits) : literals(lits) { }
 
+    clause &operator=(const clause &c) {
+      literals = c.literals;
+      return *this;
+    }
 
     void add(std::initializer_list<std::int64_t> &&lits) {
       literals.splice(literals.end(), lits);

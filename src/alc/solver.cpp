@@ -1,7 +1,38 @@
+#include <cmath>
 #include <alc/solver.hpp>
 
 std::experimental::optional<std::list<std::int64_t>> alc::solver::solve() {
-  // FIXME
+
+  using namespace Minisat;
+
+  Solver solver;
+
+  for (int64_t i = 0; i < var_count(); ++i) {
+    solver.newVar();
+  }
+
+  for (auto c: clauses_) {
+    vec<Lit> clause;
+
+    for (auto x: c.literals) {
+      clause.push(mkLit(abs(x) - 1, x < 0));
+    }
+
+    solver.addClause(clause);
+  }
+
+  if (solver.solve()) { // Problem is SAT so let's get the model
+    std::list<std::int64_t> l;
+
+    for (int i = 0; i < solver.nVars(); ++i) {
+      if (solver.modelValue(i) == l_True) {
+        l.push_back(i + 1);
+      }
+    }
+
+    return { l };
+  }
+
   return {};
 }
 

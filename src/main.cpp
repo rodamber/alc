@@ -33,10 +33,11 @@ int main(int argc, char* argv[]) {
 
   alc::encoder encoder(alc::parse(infile));
 
-  encoder.encode();
-  encoder.write_dimacs_cnf(std::cout);
-
-  std::cout << encoder.solution() << std::flush;
+  try {
+    std::cout << encoder.solution() << std::flush;
+  } catch (const std::exception& e) {
+    std::cout << e.what() << std::endl;
+  }
 
   return 0;
 }

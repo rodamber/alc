@@ -6,15 +6,26 @@
 
 #include <alc/clause.hpp>
 
+#include <minisat/core/Solver.h>
+
 
 namespace alc {
 
   class solver {
   public:
 
-    solver() : var_count_(0) { }
+    solver() = default;
 
-    // Tries to solve the problem and returns a model if one is found.
+    solver(solver &s) : var_count_(s.var_count_), clauses_(s.clauses_) { }
+
+    solver &operator=(solver &&s) {
+      var_count_ = s.var_count_;
+      clauses_ = s.clauses_;
+
+      return *this;
+    }
+
+ // Tries to solve the problem and returns a model if one is found.
     std::experimental::optional<std::list<std::int64_t>> solve();
 
     // Adds clauses to the solver. The argument will be emptied.
@@ -37,7 +48,7 @@ namespace alc {
 
   private:
     // The current number of variables.
-    std::int64_t var_count_;
+    std::int64_t var_count_ = 0;
 
     // The clauses.
     std::list<alc::clause> clauses_;
