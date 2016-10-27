@@ -2,7 +2,7 @@
 
 # Declaration of variables
 CC = g++
-CC_FLAGS = -std=c++17 -Wall -Wextra -Wfatal-errors -Wno-unused-parameter -g \
+CC_FLAGS = -std=c++17 -Wall -Wextra -Wfatal-errors -Wno-unused-parameter -O3 \
 					 -Wno-unused-variable -I../include -I.. -I./ -I./minisat \
 					 -Wno-literal-suffix -Wno-parentheses
 

@@ -59,6 +59,9 @@ private:
 
 
 
+// -----------------------------------------------------------------------------
+// VMs and job utilities
+
 
 using job = std::vector<alc::virtual_machine>;
 
@@ -97,3 +100,7 @@ std::pair<std::vector<T>, std::vector<T>>
 
   return {v1, v2};
 }
+
+std::size_t vms_ac_count(const job &job);
+
+std::size_t max_anti_collocation_count_per_vm(const std::vector<alc::virtual_machine> &vms);

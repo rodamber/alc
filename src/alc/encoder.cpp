@@ -67,8 +67,7 @@ set_t maximal_subset(set_t S) {
 
 
 alc::encoder::opt<std::pair<alc::encoder::model,std::size_t>> alc::encoder::search() {
-  // FIXME
-  std::size_t min_servers_needed = 0; // max # of anti-collocation VMs per job
+  std::size_t min_servers_needed = max_anti_collocation_count_per_vm(vms());
 
   set_t S(servers());
   set_t M;

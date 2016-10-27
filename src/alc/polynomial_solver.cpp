@@ -5,12 +5,6 @@
 #include <util.hpp>
 
 
-std::size_t vms_ac_count(const job &job) {
-  return std::count_if(job.begin(), job.end(), [](alc::virtual_machine vm) {
-      return vm.anti_collocation;
-    });
-}
-
 // Tries to assign a virtual_machine to a server. Returns true if successful, false
 // otherwise.
 bool assign(const alc::virtual_machine &vm,
@@ -79,7 +73,7 @@ std::size_t count_distinct_abs(std::vector<std::size_t> v) {
 
 alc::solution alc::polynomial_solver::solution() {
 
-  // Sort servers by descending order of cpu capacity
+  // Sort servers by descending order of min(cpu, ram) capacity
   std::sort(problem_.servers.begin(), problem_.servers.end(), [](server a, server b) {
       return std::min(a.cpu_cap, a.ram_cap) > std::min(b.cpu_cap, b.ram_cap);
     });

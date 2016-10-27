@@ -20,3 +20,25 @@ std::vector<std::vector<int>> combinations(int N, int K) {
 
   return all_combinations;
 }
+
+std::size_t vms_ac_count(const job &job) {
+  return std::count_if(job.begin(), job.end(), [](alc::virtual_machine vm) {
+      return vm.anti_collocation;
+    });
+}
+
+std::size_t max_anti_collocation_count_per_vm(const std::vector<alc::virtual_machine> &vms) {
+  // Get VMs organized by job
+  std::vector<job> jobs;
+  group_by(vms, jobs, [](alc::virtual_machine a, alc::virtual_machine b) {
+      return a.job_id == b.job_id;
+    });
+
+  std::vector<std::size_t> anti_collocation_counts;
+
+  for (auto &j: jobs) {
+    anti_collocation_counts.push_back(vms_ac_count(j));
+  }
+
+  return *std::max_element(anti_collocation_counts.begin(), anti_collocation_counts.end());
+}
