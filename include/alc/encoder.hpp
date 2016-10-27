@@ -25,20 +25,12 @@ namespace alc {
       return vm_id * servers().size() + s_id + 1;
     }
 
-    inline std::pair<std::size_t,std::size_t> from_literal_to_ids(int64_t x) const {
+    inline std::pair<virtual_machine, server> from_literal(int64_t x) const {
       const auto x_ = x - 1;
       const auto k = servers().size();
 
-      return { x / k, x % k }; // (vm.id, s.id)
-    }
-
-    inline std::pair<virtual_machine, server> from_literal(int64_t x) const {
-      auto p = from_literal_to_ids(x);
-
-      virtual_machine vm = vms().at(p.first);
-      server s = problem_.servers.at(p.second);
-
-      return { vm, s };
+      return { vms().at(x_ / k),
+          servers().at(x_ % k) };
     }
 
     // Negate a literal.

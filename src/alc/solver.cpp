@@ -1,4 +1,5 @@
 #include <cmath>
+#include <iostream>
 #include <alc/solver.hpp>
 
 std::experimental::optional<std::list<std::int64_t>> alc::solver::solve() {
@@ -22,15 +23,18 @@ std::experimental::optional<std::list<std::int64_t>> alc::solver::solve() {
   }
 
   if (solver.solve()) { // Problem is SAT so let's get the model
-    std::list<std::int64_t> l;
+    std::list<std::int64_t> model;
 
     for (int i = 0; i < solver.nVars(); ++i) {
+
+      // std::cout << "modelValue(" << i + 1 << ") = " << (solver.modelValue(i) == l_True) << std::endl;
+
       if (solver.modelValue(i) == l_True) {
-        l.push_back(i + 1);
+        model.push_back(i + 1);
       }
     }
 
-    return { l };
+    return { model };
   }
 
   return {};

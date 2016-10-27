@@ -21,6 +21,7 @@ alc::solution alc::encoder::solution() {
 
   for (auto x: answer) {
     if ((std::size_t )x <= vms().size() * servers().size()) {
+    // if ((std::size_t )x <= vms().size() * problem_.servers.size()) {
       pairs_vm_server.push_back(from_literal(x));
     }
   }
@@ -35,35 +36,42 @@ alc::solution alc::encoder::solution() {
 }
 
 std::experimental::optional<std::list<std::int64_t>> alc::encoder::search() {
-  encode();
-  return solver_.solve();
-  // for (size_t k = servers().size(); /* FIXME */ k > 0; --k) {
-  //   std::experimental::optional<std::list<std::int64_t>> model;
+  std::experimental::optional<std::list<std::int64_t>> model;
+  std::vector<int> best_combination;
 
-  //   combination_generator generate(servers().size(), k);
-  //   std::vector<int> combination;
+  for (size_t k = problem_.servers.size() - 1; /* FIXME */ k > 0; --k) {
 
-  //   bool sat = false;
+    combination_generator generate(problem_.servers.size(), k);
+    std::vector<int> combination;
 
-  //   while (!((combination = generate()).empty()) && !sat) {
-  //     considered_servers(combination);
-  //     encode();
+    // Start by assuming that the problem is unsat with k servers.
+    bool sat = false;
 
-  //     auto maybe_new_model = solver_.solve();
+    // If we already found a solution for k servers then we don't to continue.
+    // We'll go directly to the next k.
+    while (!sat && !((combination = generate()).empty())) {
+      considered_servers(combination);
+      encode();
 
-  //     if (maybe_new_model) {
-  //       // We found a solution with k servers, so let's check if there is a
-  //       // better one.
-  //       model = maybe_new_model;
-  //       sat = true;
-  //     }
-  //   }
+      auto maybe_new_model = solver_.solve();
 
-  //   if (!sat && model) {
-  //     return model;
-  //   }
-  // }
-  // return {};
+      if (maybe_new_model) {
+        // We found a solution with k servers, so let's check if there is a
+        // better one.
+        model = maybe_new_model;
+        best_combination = combination;
+        sat = true;
+      }
+    }
+
+    // If we found a k so that the problem is unsat, return the best solution
+    // found.
+    if (!sat && model) {
+      considered_servers(best_combination);
+      return model;
+    }
+  }
+  return {};
 }
 
 
