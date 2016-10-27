@@ -24,7 +24,7 @@ int main() {
   at_least_one_test();
   at_most_one_test();
   anti_col_test();
-  swc_test();
+  sequential_weighted_counter_test();
   combinations_test();
 
   return 0;
@@ -285,7 +285,7 @@ void combinations_test() {
   std::cout << "PASS" << std::endl;
 }
 
-swc_test() {
+void sequential_weighted_counter_test() {
   std::cout << "=== SWC: ";
 
 
