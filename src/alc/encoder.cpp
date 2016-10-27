@@ -4,7 +4,7 @@
 #include <alc/encoder.hpp>
 
 alc::encoder::encoder(alc::solver solver, alc::problem problem)
-  : solver_(solver), problem_(problem), server_count_(problem_.servers.size()) {
+  : solver_(solver), problem_(problem), considered_servers_(problem_.servers) {
   for (auto &vm: vms()) {
     for (auto &server: servers()) {
       // We don't need to store these because we can calculate them in O(1).
@@ -93,7 +93,7 @@ void alc::encoder::encode_sequential_weighted_counter(alc::hardware hw) {
     // Mini DSL (domain-specific language) for our problem
 
     const std::size_t n = vms().size();
-    const std::size_t k = servers().at(server.id).capacity(hw);
+    const std::size_t k = server.capacity(hw);
 
     // Sequential weighted counter encoding table of auxiliary variables
     std::vector<std::vector<std::int64_t>> s_table(n + 1, std::vector<std::int64_t>(k + 1, 0));
