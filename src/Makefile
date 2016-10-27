@@ -13,7 +13,7 @@ OBJECTS = $(SOURCES:.cpp=.o)
 
 # Main target
 $(EXEC): $(OBJECTS)
-	(cd minisat/core; make)
+	(cd minisat/core; make libs)
 	$(CC) $(OBJECTS) minisat/core/Solver.o -o $(EXEC)
 
 # To obtain object files
@@ -22,4 +22,5 @@ $(EXEC): $(OBJECTS)
 
 # To remove generated files
 clean:
-	rm -f $(EXEC) $(OBJECTS) minisat/core/*.o minisat/utils/*.o minisat/core/depend.mk minisat/core/minisat
+	rm -f $(EXEC) $(OBJECTS)
+	(cd minisat/core; make clean)

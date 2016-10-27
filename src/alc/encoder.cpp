@@ -156,7 +156,7 @@ void alc::encoder::encode_sequential_weighted_counter(alc::hardware hw) {
     const std::size_t k = server.capacity(hw);
 
     // Sequential weighted counter encoding table of auxiliary variables
-    std::vector<std::vector<std::int64_t>> s_table(n + 1, std::vector<std::int64_t>(k + 1, 0));
+    std::vector<std::vector<std::int64_t>> s_table(n, std::vector<std::int64_t>(k, 0));
 
     // Fill auxiliary table with minisat vars.
     for (std::size_t i = 0; i < n; ++i) {
