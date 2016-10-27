@@ -55,12 +55,13 @@ using set_t = std::vector<alc::server>;
 
 set_t maximal_subset(set_t S) {
   set_t MS(S);
-  std::sort(MS.begin(), MS.end());
+  std::sort(MS.begin(), MS.end(), std::greater<>());
 
-  std::remove_if(MS.begin(), MS.end(), [&](alc::server a) {
-      return a < *MS.begin();
-    });
-
+  auto it = std::remove_if(MS.begin(), MS.end(),
+                           [&](alc::server a) {
+                             return a < *MS.begin();
+                           });
+  MS.erase(it, MS.end());
   return MS;
 }
 
@@ -70,7 +71,16 @@ alc::encoder::opt<std::pair<alc::encoder::model,std::size_t>> alc::encoder::sear
   std::size_t min_servers_needed = max_anti_collocation_count_per_vm(vms());
 
   set_t S(servers());
-  set_t M;
+
+  std::sort(S.begin(), S.end(), std::greater<>());
+  set_t M(S.begin(), S.begin() + min_servers_needed - 1);
+
+  set_t aux_diff;
+  std::set_difference(S.begin(), S.end(), M.begin(), M.end(),
+                      std::back_inserter(aux_diff));
+
+  S = std::move(aux_diff);
+
 
   while (!S.empty()) {
     set_t MS = maximal_subset(S);
@@ -85,21 +95,18 @@ alc::encoder::opt<std::pair<alc::encoder::model,std::size_t>> alc::encoder::sear
     std::set_union(M.begin(), M.end(), MS.begin(), MS.end(),
                    std::back_inserter(M_MS));
 
-    if (M_MS.size() >= min_servers_needed) {
-      for (std::size_t i = 0; i < MS.size(); ++i) {
-        // FIXME
-        combination_generator<set_t> generate(MS, i);
-        set_t C_i;
+    for (std::size_t i = 1; i <= MS.size(); ++i) {
+      combination_generator<set_t> generate(MS, i);
+      set_t C_i;
 
-        while (!((C_i = generate()).empty())) {
-          set_t A;
-          std::set_union(M.begin(), M.end(), C_i.begin(), C_i.end(),
-                         std::back_inserter(A));
+      while (!((C_i = generate()).empty())) {
+        set_t A;
+        std::set_union(M.begin(), M.end(), C_i.begin(), C_i.end(),
+                       std::back_inserter(A));
 
-          auto maybe_model = sat(A);
-          if (maybe_model) {
-            return {{ *maybe_model, A.size() }};
-          }
+        auto maybe_model = sat(A);
+        if (maybe_model) {
+          return {{ *maybe_model, A.size() }};
         }
       }
     }
@@ -145,7 +152,7 @@ void alc::encoder::encode_at_most_one_server_per_vm() {
     for (auto lhs_it = servers().begin(); lhs_it != servers().end() - 1; ++lhs_it) {
       for (auto rhs_it = lhs_it + 1; rhs_it != servers().end(); ++rhs_it) {
         add_clause({ neg(literal(vm, *lhs_it)),
-                     neg(literal(vm, *rhs_it)) });
+              neg(literal(vm, *rhs_it)) });
       }
     }
   }
