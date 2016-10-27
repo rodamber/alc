@@ -2,13 +2,13 @@
 
 # Declaration of variables
 CC = g++
-CC_FLAGS = -std=c++17 -Wall -Wextra -Wfatal-errors -Wno-unused-parameter -O3 \
+CC_FLAGS = -std=c++17 -Wall -Wextra -Wfatal-errors -Wno-unused-parameter -g \
 					 -Wno-unused-variable -I../include -I.. -I./ -I../src/minisat -I../src \
 					 -Wno-literal-suffix -Wno-parentheses
 
 # File names
 EXEC = test
-SOURCES = $(wildcard *.cpp) $(wildcard ../src/alc/*.cpp)
+SOURCES = $(wildcard *.cpp) $(wildcard ../src/util.cpp ../src/alc/*.cpp)
 OBJECTS = $(SOURCES:.cpp=.o)
 
 # Main target
