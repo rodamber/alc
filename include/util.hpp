@@ -4,27 +4,13 @@
 #include <string>
 #include <vector>
 
+#include <alc/problem.hpp>
+
+// ------------------------------------------------------------------------
+// Combinations utilities
+
 // From Rosetta code (slightly modification)
-// std::vector<std::vector<int>> combinations(int N, int K) {
-//   std::string bitmask(K, 1); // K leading 1's
-//   bitmask.resize(N, 0); // N-K trailing 0's
-
-//   std::vector<std::vector<int>> all_combinations;
-
-//   // print integers and permute bitmask
-//   do {
-//     std::vector<int> combination;
-
-//     for (int i = 0; i < N; ++i) { // [0..N-1] integers
-//       if (bitmask[i]) {
-//         combination.push_back(i);
-//       }
-//     }
-//     all_combinations.push_back(combination);
-//   } while (std::prev_permutation(bitmask.begin(), bitmask.end()));
-
-//   return all_combinations;
-// }
+std::vector<std::vector<int>> combinations(int N, int K);
 
 // Generator functor. Lazily generates all the possible k-combinations of the
 // numbers from 0 to N - 1.
@@ -68,39 +54,40 @@ private:
   bool finished_ = false;
 };
 
-// private:
-//   combination_generator(bool finished)
-//     : N_(0), K_(0), finished_(finished) {
-//   }
+using job = std::vector<alc::virtual_machine>;
 
-// class combination_iterator {
-// public:
-//   combination_iterator(combination_generator &generator)
-//     : generator_(generator) {
-//   }
 
-//   combination_iterator(combination_generator &&generator)
-//     : generator_(generator) {
-//   }
+template <class T, class BinaryPredicate>
+void group_by(const std::vector<T> &origin,
+              std::vector<std::vector<T> > &result,
+              BinaryPredicate predicate) {
+  if(origin.empty())
+    return;
 
-//   combination_iterator &operator++() {
-//     generator_.next();
-//     return *this;
-//   }
+  result.clear();
+  result.resize(1);
+  result[0].push_back(origin[0]);
 
-//   std::vector<int> operator*() const {
-//     return generator_.yield();
-//   }
+  for(size_t i = 1; i < origin.size(); ++i) {
+    if(!predicate(origin[i], origin[i-1])) {
+      result.push_back(std::vector<T>());
+    }
+    result.back().push_back(origin[i]);
+  }
+}
 
-//   bool operator!=(const combination_iterator &c_it) const {
-//     return **this != *c_it;
-//   }
+template <class T, class UnaryPredicate>
+std::pair<std::vector<T>, std::vector<T>>
+  stable_partition(const std::vector<T> &xs, UnaryPredicate predicate) {
+  std::vector<T> v1, v2;
 
-// private:
-//   combination_generator &generator_;
-// };
+  for (auto x: xs) {
+    if (predicate(x)) {
+      v1.push_back(x);
+    } else {
+      v2.push_back(x);
+    }
+  }
 
-// using iterator = combination_iterator;
-
-// iterator begin() { return combination_iterator(*this);}
-// iterator end() { return combination_iterator(combination_generator(true)); }
+  return {v1, v2};
+}

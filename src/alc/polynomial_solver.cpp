@@ -2,27 +2,8 @@
 #include <utility>
 
 #include <alc/polynomial_solver.hpp>
+#include <util.hpp>
 
-using job = std::vector<alc::virtual_machine>;
-
-template <class T, class BinaryPredicate>
-void group_by(const std::vector<T> &origin,
-              std::vector<std::vector<T> > &result,
-              BinaryPredicate predicate) {
-  if(origin.empty())
-    return;
-
-  result.clear();
-  result.resize(1);
-  result[0].push_back(origin[0]);
-
-  for(size_t i = 1; i < origin.size(); ++i) {
-    if(!predicate(origin[i], origin[i-1])) {
-      result.push_back(std::vector<T>());
-    }
-    result.back().push_back(origin[i]);
-  }
-}
 
 std::size_t vms_ac_count(const job &job) {
   return std::count_if(job.begin(), job.end(), [](alc::virtual_machine vm) {
@@ -30,6 +11,8 @@ std::size_t vms_ac_count(const job &job) {
     });
 }
 
+// Tries to assign a virtual_machine to a server. Returns true if successful, false
+// otherwise.
 bool assign(const alc::virtual_machine &vm,
             alc::server &s,
             std::vector<alc::configuration> &configurations) {
@@ -44,6 +27,7 @@ bool assign(const alc::virtual_machine &vm,
   return true;
 }
 
+// Tries to assign all the vms.
 void assign_vms_to_servers(const std::vector<job> &jobs,
                            std::vector<alc::server> &servers,
                            std::vector<alc::configuration> &configurations) {
@@ -64,22 +48,6 @@ void assign_vms_to_servers(const std::vector<job> &jobs,
       ++server_it;
     }
   }
-}
-
-template <class T, class UnaryPredicate>
-std::pair<std::vector<T>, std::vector<T>>
-stable_partition(const std::vector<T> &xs, UnaryPredicate predicate) {
-  std::vector<T> v1, v2;
-
-  for (auto x: xs) {
-    if (predicate(x)) {
-      v1.push_back(x);
-    } else {
-      v2.push_back(x);
-    }
-  }
-
-  return {v1, v2};
 }
 
 std::pair<std::vector<job>, std::vector<job>>
@@ -105,6 +73,9 @@ std::size_t count_distinct_abs(std::vector<std::size_t> v) {
   auto unique_end = std::unique(v.begin(), v.end());
   return std::distance(v.begin(), unique_end);
 }
+
+// -----------------------------------------------------------------------------
+// Solution
 
 alc::solution alc::polynomial_solver::solution() {
 

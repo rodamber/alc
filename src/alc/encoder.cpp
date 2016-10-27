@@ -87,6 +87,7 @@ void alc::encoder::encode() {
 
   encode_at_least_one_server_per_vm();
   encode_at_most_one_server_per_vm();
+  encode_at_most_one_anti_collocation_vm_per_job_per_server();
   encode_not_exceeding_server_capacity(CPU);
   encode_not_exceeding_server_capacity(RAM);
 }
