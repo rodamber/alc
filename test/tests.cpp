@@ -24,6 +24,7 @@ int main() {
   at_least_one_test();
   at_most_one_test();
   anti_col_test();
+  swc_test();
   combinations_test();
 
   return 0;
@@ -281,5 +282,18 @@ void combinations_test() {
 
   assert(test.str() == out.str());
 
+  std::cout << "PASS" << std::endl;
+}
+
+swc_test() {
+  std::cout << "=== SWC: ";
+
+
+  std::ostringstream test;
+
+  std::ostringstream out;
+
+
+  assert(test.str() == out.str());
   std::cout << "PASS" << std::endl;
 }

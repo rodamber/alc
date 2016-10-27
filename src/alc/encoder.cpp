@@ -20,7 +20,9 @@ alc::solution alc::encoder::solution() {
   std::vector<std::pair<alc::virtual_machine, alc::server>> pairs_vm_server;
 
   for (auto x: answer) {
-    pairs_vm_server.push_back(from_literal(x));
+    if ((std::size_t )x <= vms().size() * servers().size()) {
+      pairs_vm_server.push_back(from_literal(x));
+    }
   }
 
   std::vector<alc::configuration> configurations;
@@ -192,9 +194,9 @@ void alc::encoder::encode_sequential_weighted_counter(alc::hardware hw) {
       for (std::size_t j = 1; j <= k - w(i); ++j)
         add_clause({ neg(x(i)), neg(s(i - 1)(j)), s(i)(j + w(i)) });
 
-    // 5. x(i) => s(i-1)(k+1-w(i)) | forall i: 2 <= i <= n
+    // 5. x(i) => -s(i-1)(k+1-w(i)) | forall i: 2 <= i <= n
     for (std::size_t i = 2; i <= n; ++i)
-      add_clause({ neg(x(i)), s(i - 1)(k + 1 - w(i)) });
+      add_clause({ neg(x(i)), neg(s(i - 1)(k + 1 - w(i))) });
 
   }
 }

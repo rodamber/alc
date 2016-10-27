@@ -33,11 +33,12 @@ int main(int argc, char* argv[]) {
 
   alc::encoder encoder(alc::parse(infile));
 
-  try {
     std::cout << encoder.solution() << std::flush;
-  } catch (const std::exception& e) {
-    std::cout << e.what() << std::endl;
-  }
+  // try {
+  //   std::cout << encoder.solution() << std::flush;
+  // } catch (const std::exception& e) {
+  //   std::cout << e.what() << std::endl;
+  // }
 
   return 0;
 }
