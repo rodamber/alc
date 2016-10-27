@@ -30,22 +30,6 @@ std::size_t vms_ac_count(const job &job) {
     });
 }
 
-template <class T>
-void append(std::vector<T> &a, const std::vector<T> &b) {
-  a.reserve(a.size() + b.size());
-  a.insert(a.end(), b.begin(), b.end());
-}
-
-template <class T>
-std::vector<T> concat(std::vector<std::vector<T>> xss) {
-  std::vector<T> vec;
-
-  for (xs: xss) {
-    append(vec, xs);
-  }
-  return vec;
-}
-
 bool assign(const alc::virtual_machine &vm,
             alc::server &s,
             std::vector<alc::configuration> &configurations) {
@@ -147,14 +131,13 @@ alc::solution alc::polynomial_solver::solution() {
   // Start by the VMs anti-collocation for each job by the order defined earlier
 
   auto pair = jobs_stable_partition(jobs);
-
   std::vector<alc::configuration> configurations;
 
   assign_vms_to_servers(pair.first, problem_.servers, configurations);
   assign_vms_to_servers(pair.second, problem_.servers, configurations);
 
 
-  // Then sort the configurations by job id, then vm index.
+  // Then sort the configurations by job id, then by vm index.
   std::sort(configurations.begin(), configurations.end(), [](configuration a, configuration b) {
       return a.vm_index < b.vm_index;
     });
