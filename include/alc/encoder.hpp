@@ -17,6 +17,15 @@ namespace alc {
 
     alc::solution solution();
 
+  public:
+
+    template <class T>
+    using opt = std::experimental::optional<T>;
+
+    using model = std::list<std::int64_t>;
+
+  public:
+
     // Gets the sat solver integer variable corresponding to the given pair (VM, Server)
     inline int literal(virtual_machine vm, server s) const {
       const auto s_ix = std::distance(servers().begin(),
@@ -31,6 +40,8 @@ namespace alc {
       return { vms().at(x_ / k),
           servers().at(x_ % k) };
     }
+
+  public:
 
     // Negate a literal.
     inline int neg(int lit) {
@@ -48,6 +59,10 @@ namespace alc {
     inline std::list<std::list<std::int64_t>> clauses() const {
       return solver_.clauses();
     }
+
+  public:
+
+    opt<model> sat(std::vector<server>);
 
     void encode();
     void encode_at_least_one_server_per_vm();
@@ -73,17 +88,13 @@ namespace alc {
       solver_.add_clause(std::move(clause));
     }
 
-    void considered_servers(std::vector<int> servers_indices) {
-      considered_servers_.clear();
-
-      for (auto i: servers_indices) {
-        considered_servers_.push_back(problem_.servers.at(i));
-      }
+    void considered_servers(std::vector<server> ss) {
+      considered_servers_ = ss;
     }
 
     // Uses a SAT solver to search for the minimum number of up servers.
     // Returns the model if one is found.
-    std::experimental::optional<std::list<std::int64_t>> search();
+    opt<std::pair<model,std::size_t>> search();
 
   };
 

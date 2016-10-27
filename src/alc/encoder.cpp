@@ -4,9 +4,14 @@
 #include <alc/encoder.hpp>
 #include <util.hpp>
 
+
+
+
 alc::encoder::encoder(alc::problem problem)
   : problem_(problem), considered_servers_(problem_.servers) {
 }
+
+
 
 alc::solution alc::encoder::solution() {
   auto maybe_answer = search();
@@ -17,9 +22,11 @@ alc::solution alc::encoder::solution() {
 
   auto answer = *maybe_answer;
 
-  std::vector<std::pair<alc::virtual_machine, alc::server>> pairs_vm_server;
+  auto model = answer.first;
+  auto min_servers_needed = answer.second;
 
-  for (auto x: answer) {
+  std::vector<std::pair<alc::virtual_machine, alc::server>> pairs_vm_server;
+  for (auto x: model) {
     if ((std::size_t )x <= vms().size() * servers().size()) {
       pairs_vm_server.push_back(from_literal(x));
     }
@@ -34,46 +41,74 @@ alc::solution alc::encoder::solution() {
   return { considered_servers_.size(), configurations };
 }
 
-std::experimental::optional<std::list<std::int64_t>> alc::encoder::search() {
-  std::experimental::optional<std::list<std::int64_t>> model;
-  std::vector<int> best_combination;
 
-  for (size_t k = problem_.servers.size() - 1; /* FIXME */ k > 0; --k) {
 
-    combination_generator generate(problem_.servers.size(), k);
-    std::vector<int> combination;
-
-    // Start by assuming that the problem is unsat with k servers.
-    bool sat = false;
-
-    // If we already found a solution for k servers then we don't to continue.
-    // We'll go directly to the next k.
-    while (!sat && !((combination = generate()).empty())) {
-      considered_servers(combination);
-      encode();
-
-      auto maybe_new_model = solver_.solve();
-
-      if (maybe_new_model) {
-        // We found a solution with k servers, so let's check if there is a
-        // better one.
-        model = maybe_new_model;
-        best_combination = combination;
-        sat = true;
-      }
-    }
-
-    // If we found a k so that the problem is unsat, return the best solution
-    // found.
-    if (!sat && model) {
-      considered_servers(best_combination);
-      return model;
-    }
-  }
-  return {};
+alc::encoder::opt<alc::encoder::model> alc::encoder::sat(std::vector<alc::server> ss) {
+  considered_servers(ss);
+  encode();
+  return solver_.solve();
 }
 
 
+
+using set_t = std::vector<alc::server>;
+
+set_t maximal_subset(set_t S) {
+  set_t MS(S);
+  std::sort(MS.begin(), MS.end());
+
+  std::remove_if(MS.begin(), MS.end(), [&](alc::server a) {
+      return a < *MS.begin();
+    });
+
+  return MS;
+}
+
+
+
+alc::encoder::opt<std::pair<alc::encoder::model,std::size_t>> alc::encoder::search() {
+  // FIXME
+  std::size_t min_servers_needed = 0; // max # of anti-collocation VMs per job
+
+  set_t S(servers());
+  set_t M;
+
+  while (!S.empty()) {
+    set_t MS = maximal_subset(S);
+
+    set_t diff;
+    std::set_difference(S.begin(), S.end(), MS.begin(), MS.end(),
+                        std::back_inserter(diff));
+
+    S = std::move(diff);
+
+    set_t M_MS;
+    std::set_union(M.begin(), M.end(), MS.begin(), MS.end(),
+                   std::back_inserter(M_MS));
+
+    if (M_MS.size() >= min_servers_needed) {
+      for (std::size_t i = 0; i < MS.size(); ++i) {
+        // FIXME
+        combination_generator<set_t> generate(MS, i);
+        set_t C_i;
+
+        while (!((C_i = generate()).empty())) {
+          set_t A;
+          std::set_union(M.begin(), M.end(), C_i.begin(), C_i.end(),
+                         std::back_inserter(A));
+
+          auto maybe_model = sat(A);
+          if (maybe_model) {
+            return {{ *maybe_model, A.size() }};
+          }
+        }
+      }
+    }
+    M = M_MS;
+  }
+
+  return {};
+}
 
 void alc::encoder::encode() {
   solver_ = alc::solver();

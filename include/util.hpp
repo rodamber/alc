@@ -14,29 +14,30 @@ std::vector<std::vector<int>> combinations(int N, int K);
 
 // Generator functor. Lazily generates all the possible k-combinations of the
 // numbers from 0 to N - 1.
+template <class Collection>
 class combination_generator {
 public:
-  combination_generator(int N, int K)
-    : bitmask_(K, 1), N_(N), K_(K) {
-    bitmask_.resize(N, 0);
+  combination_generator(const Collection &coll, int K)
+    : bitmask_(K, 1), collection_(coll), N_(coll.size()), K_(K) {
+    bitmask_.resize(N_, 0);
   }
 
 public:
-  std::vector<int> operator()() {
+  Collection operator()() {
     auto combination = yield();
     next();
     return combination;
   }
 
-  std::vector<int> yield() const {
+  Collection yield() const {
     if (finished_)
       return {};
 
-    std::vector<int> combination;
+    Collection combination;
 
     for (int i = 0; i < N_; ++i)
       if (bitmask_[i])
-        combination.push_back(i);
+        combination.push_back(collection_.at(i));
 
     return combination;
   }
@@ -48,11 +49,16 @@ public:
 private:
   std::string bitmask_;
 
+  Collection collection_;
+
   const int N_;
   const int K_;
 
   bool finished_ = false;
 };
+
+
+
 
 using job = std::vector<alc::virtual_machine>;
 
