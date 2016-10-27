@@ -13,7 +13,7 @@ OBJECTS = $(SOURCES:.cpp=.o)
 
 # Main target
 $(EXEC): $(OBJECTS)
-	(cd minisat/core; make libs)
+	(cd minisat/core; make )
 	$(CC) $(OBJECTS) minisat/core/Solver.o -o $(EXEC)
 
 # To obtain object files
