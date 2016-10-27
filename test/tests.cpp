@@ -293,6 +293,8 @@ void sequential_weighted_counter_test() {
 
   std::ostringstream out;
 
+  assert(0 == 1);
+
 
   assert(test.str() == out.str());
   std::cout << "PASS" << std::endl;

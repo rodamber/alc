@@ -35,13 +35,13 @@ int main(int argc, char* argv[]) {
   alc::problem problem(alc::parse(infile));
 
 
-  if (problem.easy) {
-    alc::polynomial_solver solver(problem);
-    std::cout << solver.solution() << std::flush;
-  } else {
+  // if (problem.easy) {
+  //   alc::polynomial_solver solver(problem);
+  //   std::cout << solver.solution() << std::flush;
+  // } else {
     alc::encoder encoder(problem);
     std::cout << encoder.solution() << std::flush;
-  }
+  // }
 
   return 0;
 }

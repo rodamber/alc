@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <experimental/optional>
 #include <iostream>
 #include <utility>
@@ -18,11 +19,9 @@ namespace alc {
 
     // Gets the sat solver integer variable corresponding to the given pair (VM, Server)
     inline int literal(virtual_machine vm, server s) const {
-      return vm.id * servers().size() + s.id + 1;
-    }
-
-    inline int literal(std::size_t vm_id, std::size_t s_id) const {
-      return vm_id * servers().size() + s_id + 1;
+      const auto s_ix = std::distance(servers().begin(),
+                                      std::find(servers().begin(), servers().end(), s));
+      return vm.id * servers().size() + s_ix + 1;
     }
 
     inline std::pair<virtual_machine, server> from_literal(int64_t x) const {

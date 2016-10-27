@@ -21,7 +21,6 @@ alc::solution alc::encoder::solution() {
 
   for (auto x: answer) {
     if ((std::size_t )x <= vms().size() * servers().size()) {
-    // if ((std::size_t )x <= vms().size() * problem_.servers.size()) {
       pairs_vm_server.push_back(from_literal(x));
     }
   }
@@ -165,8 +164,9 @@ void alc::encoder::encode_sequential_weighted_counter(alc::hardware hw) {
       }
     }
 
-    const auto x = [&](std::size_t i) { // get VM literal of column s.id, line i - 1
-      return literal(i - 1, server.id);
+    const auto x = [&](std::size_t i) {
+      auto vm = vms().at(i - 1);
+      return literal(vm, server);
     };
 
     const auto w = [&](std::size_t i) { // weight of VM of index i - 1
