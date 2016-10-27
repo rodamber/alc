@@ -11,7 +11,7 @@ namespace alc {
   class encoder {
   public:
 
-    encoder(solver, problem);
+    encoder(problem);
 
     alc::solution solution();
 

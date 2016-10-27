@@ -95,7 +95,7 @@ void literal_conversion_test() {
   std::cout << "=== LITERAL CONVERSION: ";
 
   problem problem = spec_problem();
-  encoder encoder(solver(), problem);
+  encoder encoder(problem);
 
   std::int64_t x = 1;
 
@@ -120,7 +120,7 @@ void at_least_one_test() {
   std::cout << "=== AT LEAST ONE: ";
 
   problem problem = spec_problem();
-  encoder encoder(solver(), problem);
+  encoder encoder(problem);
 
   const std::size_t vms_count = problem.vms.size();
   const std::size_t servers_count = problem.servers.size();
@@ -159,7 +159,7 @@ void at_most_one_test() {
   std::cout << "=== AT MOST ONE: ";
 
   problem problem = spec_problem();
-  encoder encoder(solver(), problem);
+  encoder encoder(problem);
 
   const std::size_t vms_count = problem.vms.size();
   const std::size_t servers_count = problem.servers.size();
@@ -203,7 +203,7 @@ void anti_col_test() {
   std::cout << "=== ANTI COL: ";
 
   problem problem = spec_problem();
-  encoder encoder(solver(), problem);
+  encoder encoder(problem);
 
   std::ostringstream test;
 

@@ -3,14 +3,8 @@
 
 #include <alc/encoder.hpp>
 
-alc::encoder::encoder(alc::solver solver, alc::problem problem)
-  : solver_(solver), problem_(problem), considered_servers_(problem_.servers) {
-  for (auto &vm: vms()) {
-    for (auto &server: servers()) {
-      // We don't need to store these because we can calculate them in O(1).
-      solver_.new_var();
-    }
-  }
+alc::encoder::encoder(alc::problem problem)
+  : problem_(problem), considered_servers_(problem_.servers) {
 }
 
 alc::solution alc::encoder::solution() {
@@ -26,6 +20,15 @@ std::experimental::optional<std::list<std::int64_t>> alc::encoder::search() cons
 
 
 void alc::encoder::encode() {
+  solver_ = solver();
+
+  for (auto &vm: vms()) {
+    for (auto &server: servers()) {
+      // We don't need to store these because we can calculate them in O(1).
+      solver_.new_var();
+    }
+  }
+
   encode_at_least_one_server_per_vm();
   encode_at_most_one_server_per_vm();
   encode_not_exceeding_server_capacity(CPU);

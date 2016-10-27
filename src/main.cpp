@@ -31,7 +31,10 @@ int main(int argc, char* argv[]) {
   const std::string filename(argv[1]);
   std::ifstream infile(filename);
 
-  alc::encoder encoder(alc::solver(), alc::parse(infile));
+  alc::encoder encoder(alc::parse(infile));
+
+  encoder.encode();
+  encoder.write_dimacs_cnf(std::cout);
 
   std::cout << encoder.solution() << std::flush;
 
