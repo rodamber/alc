@@ -46,6 +46,14 @@ std::ostream &operator<<(std::ostream& os, const std::list<std::list<T>> ll) {
   return os;
 }
 
+template <class T>
+std::ostream &operator<<(std::ostream &os, const std::vector<T> vec) {
+  for (auto x: vec) {
+    os << x << " ";
+  }
+  return os;
+}
+
 
 problem spec_problem() {
 
@@ -251,12 +259,25 @@ void combinations_test() {
 
   std::ostringstream out;
 
-  for (auto c: combinations(5, 3)) {
-    for (auto x: c) {
+  combination_generator generate(5, 3);
+  std::vector<int> combination;
+
+  while (!((combination = generate()).empty())) {
+    for (auto x: combination) {
       out << x;
     }
     out << std::endl;
   }
+  // std::cout << "TEST\n"
+  //           << "====" << std::endl;
+
+  // std::cout << test.str() << std::endl;
+
+  // std::cout << "OUT\n"
+  //           << "===" << std::endl;
+
+  // std::cout << out.str() << std::endl;
+
 
   assert(test.str() == out.str());
 
