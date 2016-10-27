@@ -83,6 +83,10 @@ namespace alc {
 
   // A triple representing in which server is a certain VM.
   struct configuration {
+    configuration(std::size_t job_id_, std::size_t vm_index_, std::size_t server_id_)
+      : job_id(job_id_), vm_index(vm_index_), server_id(server_id_) {
+    }
+
     std::size_t job_id;
     std::size_t vm_index;
     std::size_t server_id;
@@ -90,6 +94,10 @@ namespace alc {
 
   // Answer to the problem.
   struct solution {
+    solution(std::size_t count, std::vector<configuration> configs)
+      : min_server_count(count), configurations(configs) {
+    }
+
     std::size_t min_server_count; // Minimum number of servers needed.
     std::vector<configuration> configurations; // Tells where is each VM.
   };

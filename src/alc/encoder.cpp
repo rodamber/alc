@@ -2,18 +2,58 @@
 #include <vector>
 
 #include <alc/encoder.hpp>
+#include <util.hpp>
 
 alc::encoder::encoder(alc::problem problem)
   : problem_(problem), considered_servers_(problem_.servers) {
 }
 
 alc::solution alc::encoder::solution() {
-  // FIXME
-  return {};
+  auto answer = *search();
+
+  std::vector<std::pair<alc::virtual_machine, alc::server>> pairs_vm_server;
+
+  std::transform(answer.begin(), answer.end(), pairs_vm_server.begin(),
+                 [&](std::int64_t x) {
+                   return from_literal(x);
+                 });
+
+  std::vector<alc::configuration> configurations;
+
+  for (auto &p : pairs_vm_server) {
+    configurations.push_back({ p.first.job_id, p.first.job_index, p.second.id });
+  }
+
+  return { considered_servers_.size(), configurations };
 }
 
-std::experimental::optional<std::list<std::int64_t>> alc::encoder::search() const {
-  // FIXME
+std::experimental::optional<std::list<std::int64_t>> alc::encoder::search() {
+  for (size_t k = servers().size(); /* FIXME */ k > 0; --k) {
+    std::experimental::optional<std::list<std::int64_t>> model;
+
+    combination_generator generate(servers().size(), k);
+    std::vector<int> combination;
+
+    bool sat = false;
+
+    while (!((combination = generate()).empty()) && !sat) {
+      considered_servers(combination);
+      encode();
+
+      auto maybe_new_model = solver_.solve();
+
+      if (maybe_new_model) {
+        // We found a solution with k servers, so let's check if there is a
+        // better one.
+        model = maybe_new_model;
+        sat = true;
+      }
+    }
+
+    if (!sat && model) {
+      return model;
+    }
+  }
   return {};
 }
 

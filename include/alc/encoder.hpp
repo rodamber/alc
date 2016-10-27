@@ -2,6 +2,7 @@
 
 #include <experimental/optional>
 #include <iostream>
+#include <utility>
 
 #include <alc/problem.hpp>
 #include <alc/solver.hpp>
@@ -16,12 +17,28 @@ namespace alc {
     alc::solution solution();
 
     // Gets the sat solver integer variable corresponding to the given pair (VM, Server)
-    inline int literal(virtual_machine vm, server s) {
+    inline int literal(virtual_machine vm, server s) const {
       return vm.id * servers().size() + s.id + 1;
     }
 
-    inline int literal(std::size_t vm_id, std::size_t s_id) {
+    inline int literal(std::size_t vm_id, std::size_t s_id) const {
       return vm_id * servers().size() + s_id + 1;
+    }
+
+    inline std::pair<std::size_t,std::size_t> from_literal_to_ids(int64_t x) const {
+      const auto x_ = x - 1;
+      const auto k = servers().size();
+
+      return { x / k, x % k }; // (vm.id, s.id)
+    }
+
+    inline std::pair<virtual_machine, server> from_literal(int64_t x) const {
+      auto p = from_literal_to_ids(x);
+
+      virtual_machine vm = vms().at(p.first);
+      server s = problem_.servers.at(p.second);
+
+      return { vm, s };
     }
 
     // Negate a literal.
@@ -75,7 +92,7 @@ namespace alc {
 
     // Uses a SAT solver to search for the minimum number of up servers.
     // Returns the model if one is found.
-    std::experimental::optional<std::list<std::int64_t>> search() const;
+    std::experimental::optional<std::list<std::int64_t>> search();
 
   };
 
