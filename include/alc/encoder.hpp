@@ -62,7 +62,7 @@ namespace alc {
 
   public:
 
-    opt<model> sat(std::vector<server>);
+    opt<model> sat(const std::vector<server>&);
 
     void encode();
     void encode_at_least_one_server_per_vm();

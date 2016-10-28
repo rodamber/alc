@@ -43,7 +43,7 @@ alc::solution alc::encoder::solution() {
 
 
 
-alc::encoder::opt<alc::encoder::model> alc::encoder::sat(std::vector<alc::server> ss) {
+alc::encoder::opt<alc::encoder::model> alc::encoder::sat(const std::vector<alc::server> &ss) {
   considered_servers(ss);
   encode();
   return solver_.solve();
@@ -69,18 +69,20 @@ set_t maximal_subset(set_t S) {
 
 alc::encoder::opt<std::pair<alc::encoder::model,std::size_t>> alc::encoder::search() {
   std::size_t min_servers_needed = max_anti_collocation_count_per_vm(vms());
-
   set_t S(servers());
+  set_t M;
 
-  std::sort(S.begin(), S.end(), std::greater<>());
-  set_t M(S.begin(), S.begin() + min_servers_needed - 1);
+  if (min_servers_needed > 1) {
 
-  set_t aux_diff;
-  std::set_difference(S.begin(), S.end(), M.begin(), M.end(),
-                      std::back_inserter(aux_diff));
+    std::sort(S.begin(), S.end(), std::greater<>());
+    M.insert(M.end(), S.begin(), S.begin() + min_servers_needed - 1);
 
-  S = std::move(aux_diff);
+    set_t aux_diff;
+    std::set_difference(S.begin(), S.end(), M.begin(), M.end(),
+                        std::back_inserter(aux_diff));
 
+    S = std::move(aux_diff);
+  }
 
   while (!S.empty()) {
     set_t MS = maximal_subset(S);
