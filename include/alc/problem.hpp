@@ -19,7 +19,8 @@ namespace alc {
 
     friend bool operator==(const server &x, const server &y) {
       return x.cpu_cap == y.cpu_cap
-        && x.ram_cap == y.ram_cap;
+        && x.ram_cap == y.ram_cap
+        && x.id == y.id;
     }
 
     friend bool operator>(const server &x, const server &y) {
