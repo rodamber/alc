@@ -1,16 +1,16 @@
-Group: 10
+*Group*: 10
 
-Students:
+*Students*:
   - João Nuno Estevão Fidalgo Ferreira Alves (79155)
   - Rodrigo André Moreira Bernardo (78942)
 
-Programming Language: C++
+*Programming Language*: C++
 
-SAT-Solver: minisat
+*SAT-Solver*: minisat
 
-Version: 2.0
+*Version*: 2.0
 
-Compiler: g++ 5.4.0
+*Compiler*: g++ 5.4.0
 
 # Compiling
 ```
