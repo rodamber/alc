@@ -138,29 +138,70 @@ def main():
             ac_cons = [Distinct(ac_matrix[i])]
             print(ac_cons)
             solver.add(ac_cons)
- 
+    
     #cardinality constraints
     S = [ Function('s%s' %i, IntSort(), IntSort()) for i in range(len(servers))]
-    print(S)
-    """
-    for i in range(len(vms)):
-        for j in range(len(servers)):
-            #not sure if it worked
-            solver.add(If(V[i] == j, S[j](V[i]) == 1, S[j](V[i]) == 0))
-    """
-    """     
-    for s in servers:
-        first_term = s.cpu_cap
-        second_term = None
+    
+    for j in range(len(servers)):
         for i in range(len(vms)):
-            second_term += S[s.id](vms[i]) * vms[i].cpu_req
-        solver.add(first_term >= second_term)
-    """     
-
+            #not sure if it worked
+            tmp = (If(V[i] == j, S[j](V[i]) == 1, S[j](V[i]) == 0))
+            solver.add(tmp)
+    
+    for i in range(len(servers)):
+        cpu_cons = (Sum([S[i](V[j]) * vms[j].cpu_req for j in range(len(vms))]) <= servers[i].cpu_cap)
+        ram_cons = (Sum([S[i](V[j]) * vms[j].ram_req for j in range(len(vms))]) <= servers[i].ram_cap)
+        
+        solver.add(cpu_cons)
+        solver.add(ram_cons)
+        print(cpu_cons)
+        print(ram_cons)
+    
     if solver.check() == sat:
+        print("Sat")
         m = solver.model()
         print (m)
-        
+        print("______________DEBUG_________________")
+        print("______________SERVER0_________________")
+        print(m.evaluate(S[0](V[0])))
+        print(m.evaluate(S[0](V[1])))
+        print(m.evaluate(S[0](V[2])))
+        print(m.evaluate(S[0](V[3])))
+        print(m.evaluate(S[0](V[4])))
+        print(m.evaluate(S[0](V[5])))
+        print(m.evaluate(S[0](V[6])))
+        print(m.evaluate(S[0](V[7])))
+        print("______________SERVER1_________________")
+        print(m.evaluate(S[1](V[0])))
+        print(m.evaluate(S[1](V[1])))
+        print(m.evaluate(S[1](V[2])))
+        print(m.evaluate(S[1](V[3])))
+        print(m.evaluate(S[1](V[4])))
+        print(m.evaluate(S[1](V[5])))
+        print(m.evaluate(S[1](V[6])))
+        print(m.evaluate(S[1](V[7])))
+        print("______________SERVER2_________________")
+        print(m.evaluate(S[2](V[0])))
+        print(m.evaluate(S[2](V[1])))
+        print(m.evaluate(S[2](V[2])))
+        print(m.evaluate(S[2](V[3])))
+        print(m.evaluate(S[2](V[4])))
+        print(m.evaluate(S[2](V[5])))
+        print(m.evaluate(S[2](V[6])))
+        print(m.evaluate(S[2](V[7])))
+        print("______________SERVER3_________________")
+        print(m.evaluate(S[3](V[0])))
+        print(m.evaluate(S[3](V[1])))
+        print(m.evaluate(S[3](V[2])))
+        print(m.evaluate(S[3](V[3])))
+        print(m.evaluate(S[3](V[4])))
+        print(m.evaluate(S[3](V[5])))
+        print(m.evaluate(S[3](V[6])))
+        print(m.evaluate(S[3](V[7])))
+        print("________________END___________________")
 
+    if solver.check() == unsat:
+        print("Unsat")
+    
 if __name__ == "__main__":
     main()
