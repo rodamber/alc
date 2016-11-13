@@ -94,42 +94,73 @@ def get_problem(file_name):
                                               ram_req, anti_collocation)]
     # print(problem)
     return problem
-
+    
 
 def main():
-    file_name = get_file_name()
+    file_name = get_file_name()  
 
     if (file_name == ""):
         print("USAGE: proj2 <scenario-file-name>")
         return
 
     problem = get_problem(file_name)
-    # print(problem)
+    
+    solver = Solver()
+    
+    servers = problem['servers']
+    vms = problem['vms']
+        
+    #V = [Int('j%sv%s' %(vms[i].job_id, vms[i].vm_index)) for i in range(len(vms))]
+    
+    V = [Int('VM%s' %i) for i in range(len(vms))]
+    
+    #at-most-one/at-least-one
+    at_cons = [ And(0 <= V[i], V[i] < len(servers)) for i in range(len(vms)) ]
+    solver.add(at_cons)
+    
+    #anti-collocation
+    num_jobs = vms[-1].job_id + 1
+    ac_matrix = [[] for i in range(num_jobs)] #list of lists where no vm can be on the same server as other
+    vm_index = 0
+    
+    print(num_jobs)
+    
+    for vm in vms:
+        if(vm.anti_collocation):
+            ac_matrix[vm.job_id].append(V[vm_index])
+        
+        vm_index += 1
+    
+    print(ac_matrix)
+    
+    for i in range(num_jobs):
+        if(len(ac_matrix[i]) > 1):
+            ac_cons = [Distinct(ac_matrix[i])]
+            print(ac_cons)
+            solver.add(ac_cons)
+ 
+    #cardinality constraints
+    S = [ Function('s%s' %i, IntSort(), IntSort()) for i in range(len(servers))]
+    print(S)
+    """
+    for i in range(len(vms)):
+        for j in range(len(servers)):
+            #not sure if it worked
+            solver.add(If(V[i] == j, S[j](V[i]) == 1, S[j](V[i]) == 0))
+    """
+    """     
+    for s in servers:
+        first_term = s.cpu_cap
+        second_term = None
+        for i in range(len(vms)):
+            second_term += S[s.id](vms[i]) * vms[i].cpu_req
+        solver.add(first_term >= second_term)
+    """     
 
-    # servers = problem['servers']
-    # vms = problem['vms']
-
-    # Table of variables
-    # vars = [[ Bool('x{}{}'.format(i, j)) for j in range(len(servers))] for i in range(len(vms))]
-    # print(vars)
-    # print(vars[0][1])
-    # print(vars[1][2])
-
-    # vm_is_in_server = Function('f', 
-    #                            IntSort(),  # vm id
-    #                            IntSort(),  # server id
-    #                            BoolSort()) # is the vm running in this server?
-
-    # vms = [Int('vm{}'.format(i)) for i in problem['vms']]
-    # servers = [Int('server{}'.format(i)) for i in problem['servers']]
-
-    # vm = Int('vm')
-    # server = Int('server')
-
-
-
-
-
+    if solver.check() == sat:
+        m = solver.model()
+        print (m)
+        
 
 if __name__ == "__main__":
     main()
