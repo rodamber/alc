@@ -127,96 +127,65 @@ def main():
     
     solver = Solver()
         
-    #V = [Int('j%sv%s' %(vms[i].job_id, vms[i].vm_index)) for i in range(len(vms))]
-    V = [Int('VM%s' %i) for i in range(len(vms))]
+    V = [Int('VM{}'.format(i)) for i, _ in enumerate(vms)]
 
-    # at-most-one/at-least-one
-    at_cons = [ And(0 <= V[i], V[i] < len(servers)) for i in range(len(vms)) ]
+    #---------------------------------------------------------------------------
+    # Cardinality constraints
+    at_cons = [ And(0 <= V[i], V[i] < len(servers)) for i, _ in enumerate(vms)]
     solver.add(at_cons)
+    print(at_cons)
     
-    # anti-collocation
+    #---------------------------------------------------------------------------
+    # Anti-collocation constraints
     num_jobs  = vms[-1].job_id + 1
     ac_matrix = [[] for i in range(num_jobs)]
     vm_index  = 0
-    
     print(num_jobs)
     
     for vm in vms:
         if(vm.anti_collocation):
             ac_matrix[vm.job_id].append(V[vm_index])
         vm_index += 1
-    
     print(ac_matrix)
     
     for i in range(num_jobs):
         if(len(ac_matrix[i]) > 1):
             ac_cons = [Distinct(ac_matrix[i])]
             solver.add(ac_cons)
-
             print(ac_cons)
     
-    # cardinality constraints
-    S = [ Function('s%s' %i, IntSort(), IntSort()) for i in range(len(servers))]
+    #---------------------------------------------------------------------------
+    # Server capacity constraints
+    S = [ Function('s%s' %i, IntSort(), IntSort()) for i, _ in enumerate(servers)]
     
-    for j in range(len(servers)):
-        for i in range(len(vms)):
-            # not sure if it worked
-            tmp = (If(V[i] == j, S[j](V[i]) == 1, S[j](V[i]) == 0))
-            solver.add(tmp)
+    for j, _ in enumerate(servers):
+        for i, _ in enumerate(vms):
+            solver.add(If(V[i] == j, S[j](V[i]) == 1, S[j](V[i]) == 0))
     
-    for i in range(len(servers)):
+    for i, _ in enumerate(servers):
         cpu_cons = (Sum([S[i](V[j]) * vms[j].cpu_req 
-                         for j in range(len(vms))]) <= servers[i].cpu_cap)
+                         for j, _ in enumerate(vms)]) <= servers[i].cpu_cap)
         ram_cons = (Sum([S[i](V[j]) * vms[j].ram_req 
-                         for j in range(len(vms))]) <= servers[i].ram_cap)
+                         for j, _ in enumerate(vms)]) <= servers[i].ram_cap)
         solver.add(cpu_cons)
         solver.add(ram_cons)
 
         print(cpu_cons)
         print(ram_cons)
     
+    
+    #---------------------------------------------------------------------------
+    # Solution
     if solver.check() == sat:
         m = solver.model()
 
         print("Sat")
         print (m)
         print("______________DEBUG_________________")
-        print("______________SERVER0_________________")
-        print(m.evaluate(S[0](V[0])))
-        print(m.evaluate(S[0](V[1])))
-        print(m.evaluate(S[0](V[2])))
-        print(m.evaluate(S[0](V[3])))
-        print(m.evaluate(S[0](V[4])))
-        print(m.evaluate(S[0](V[5])))
-        print(m.evaluate(S[0](V[6])))
-        print(m.evaluate(S[0](V[7])))
-        print("______________SERVER1_________________")
-        print(m.evaluate(S[1](V[0])))
-        print(m.evaluate(S[1](V[1])))
-        print(m.evaluate(S[1](V[2])))
-        print(m.evaluate(S[1](V[3])))
-        print(m.evaluate(S[1](V[4])))
-        print(m.evaluate(S[1](V[5])))
-        print(m.evaluate(S[1](V[6])))
-        print(m.evaluate(S[1](V[7])))
-        print("______________SERVER2_________________")
-        print(m.evaluate(S[2](V[0])))
-        print(m.evaluate(S[2](V[1])))
-        print(m.evaluate(S[2](V[2])))
-        print(m.evaluate(S[2](V[3])))
-        print(m.evaluate(S[2](V[4])))
-        print(m.evaluate(S[2](V[5])))
-        print(m.evaluate(S[2](V[6])))
-        print(m.evaluate(S[2](V[7])))
-        print("______________SERVER3_________________")
-        print(m.evaluate(S[3](V[0])))
-        print(m.evaluate(S[3](V[1])))
-        print(m.evaluate(S[3](V[2])))
-        print(m.evaluate(S[3](V[3])))
-        print(m.evaluate(S[3](V[4])))
-        print(m.evaluate(S[3](V[5])))
-        print(m.evaluate(S[3](V[6])))
-        print(m.evaluate(S[3](V[7])))
+        for i, _ in enumerate(servers):
+            print("______________SERVER_{}_________________".format(i))
+            for j, _ in enumerate(vms):
+                print(m.evaluate(S[i](V[j])))
         print("________________END___________________")
 
     if solver.check() == unsat:
