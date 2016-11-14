@@ -123,6 +123,15 @@ def print_solution(num_servers, model, V, vms):
     for i, v in enumerate(V):
         print('{} {} -> {}'.format(vms[i].job_id, vms[i].vm_index, model[v]))
 
+def cardinality_constraints():
+    pass
+
+def anti_collocation_constraints():
+    pass
+
+def server_capacity_constraints():
+    pass
+
 def main():
     file_name = get_file_name()  
 
@@ -148,25 +157,23 @@ def main():
     # Anti-collocation constraints
     num_jobs  = vms[-1].job_id + 1
     ac_matrix = [[] for i in range(num_jobs)]
-    vm_index  = 0
     # print(num_jobs)
 
-    for vm in vms:
+    for i, vm in enumerate(vms):
         if(vm.anti_collocation):
-            ac_matrix[vm.job_id].append(V[vm_index])
-        vm_index += 1
+            ac_matrix[vm.job_id].append(V[i])
     # print(ac_matrix)
     
-    for i in range(num_jobs):
-        if(len(ac_matrix[i]) > 1):
-            ac_cons = [Distinct(ac_matrix[i])]
+    for j in ac_matrix:
+        if j:
+            ac_cons = [Distinct(j)]
             solver.add(ac_cons)
             # print(ac_cons)
     
     min_num_servers = max([len(l) for l in ac_matrix])
     # print(min_num_servers)
     
-     #---------------------------------------------------------------------------
+    #---------------------------------------------------------------------------
     # Server capacity constraints
     S = [Function('s{}'.format(i), IntSort(), IntSort()) for i, _ in enumerate(servers)]
     
@@ -197,8 +204,8 @@ def main():
         # print(tmp)
     
     last_sat_model = None
-    # for num_servers in reversed(range(1, len(servers) + 1)):
-    for num_servers in range(min_num_servers, len(servers) + 1):
+    for num_servers in reversed(range(1, len(servers) + 1)):
+    # for num_servers in range(min_num_servers, len(servers) + 1):
         solver.push()
         solver.add(Sum([f(i) for i, _ in enumerate(servers)]) <= num_servers)
 
@@ -210,7 +217,7 @@ def main():
 
         solver.pop()
 
-        print("Finished iteration with number of servers = {}".format(num_servers))
+        print("Finished iteration with |S| = {}".format(num_servers))
 
     
 # -. PUSH
