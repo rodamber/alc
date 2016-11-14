@@ -159,7 +159,69 @@ def solve(servers, vms):
     V = [Int('VM{}'.format(vm.id)) for vm in vms]
     S = [Function('s{}'.format(s.id), IntSort(), IntSort()) for s in servers]
     f = Function('f', IntSort(), IntSort())
+
     solver = Solver()
+
+    #---------------------------------------------------------------------------
+    # Search
+
+    # complex_vms = list(filter(lambda vm: vm.cpu_req != 1 or vm.ram_req != 1, vms))
+    # simple_vms = list(set(vms) - set(complex_vms))
+
+    # solver.push()
+
+    # # 1. Solve for "complex" VMs
+    # solver.add(cardinality_constraints(servers, complex_vms, V))
+
+    # min_num_servers, constraints = anti_collocation_constraints(servers, complex_vms, V)
+    # solver.add(constraints)
+
+    # solver.add(server_capacity_constraints(servers, complex_vms, V, S))
+
+    # solver.push()
+    # # 2. Check if the solution holds when adding the "simple" VMs
+    # solver.pop()
+    # # 3. If not, negate the model resulting from step 1 and add it to the solver as
+    # #    a constraint. Go back to step 1.
+    # # 4. If yes, try again for another (better) number of servers.
+    # solver.pop()
+
+    #---------------------------------------------------------------------------
+    # Cardinality constraints
+    solver.add(cardinality_constraints(servers, vms, V))
+
+    #---------------------------------------------------------------------------
+    # Anti-collocation constraints
+    min_num_servers, constraints = anti_collocation_constraints(servers, vms, V)
+    for c in constraints: solver.add(c)
+   
+    #---------------------------------------------------------------------------
+    # Server capacity constraints
+    solver.add(server_capacity_constraints(servers, vms, V, S))
+
+    for s in servers:
+        solver.add(If(Sum([S[s.id](v) for v in V]) >= 1, 
+                      f(s.id) == 1, 
+                      f(s.id) == 0))
+        
+    model = None
+    for num_servers in reversed(range(1, len(servers) + 1)):
+        solver.push()
+        solver.add(Sum([f(s.id) for s in servers]) <= num_servers)
+
+        solution = solver.check()
+        if solution == unsat:
+            server_dict = {vm : model[v] for vm, v in zip(vms, V)}
+            return num_servers + 1, server_dict
+        elif solution == sat:
+            model = solver.model()
+            solver.pop()
+            print("Finished iteration with |S| = {}".format(num_servers))
+        else:
+            return None
+
+    return None
+
 
     #---------------------------------------------------------------------------
     # Cardinality constraints
@@ -173,51 +235,6 @@ def solve(servers, vms):
     #---------------------------------------------------------------------------
     # Server capacity constraints
     # solver.add(server_capacity_constraints(servers, vms, V, S))
-
-    #---------------------------------------------------------------------------
-    # Search
-
-    complex_vms = list(filter(lambda vm: vm.cpu_req != 1 or vm.ram_req != 1, vms))
-    simple_vms = list(set(vms) - set(complex_vms))
-
-    solver.push()
-
-    # 1. Solve for "complex" VMs
-    solver.add(cardinality_constraints(servers, complex_vms, V))
-
-    min_num_servers, constraints = anti_collocation_constraints(servers, complex_vms, V)
-    solver.add(constraints)
-
-    solver.add(server_capacity_constraints(servers, complex_vms, V, S))
-
-    solver.push()
-    # 2. Check if the solution holds when adding the "simple" VMs
-    solver.pop()
-    # 3. If not, negate the model resulting from step 1 and add it to the solver as
-    #    a constraint. Go back to step 1.
-    # 4. If yes, try again for another (better) number of servers.
-    solver.pop()
-
-    # for i, _ in enumerate(servers):
-    #     solver.add(If(Sum([S[i](v) for v in V]) >= 1, f(i) == 1, f(i) == 0))
-        
-    # model = None
-    # for num_servers in reversed(range(1, len(servers) + 1)):
-    #     solver.push()
-    #     solver.add(Sum([f(i) for i, _ in enumerate(servers)]) <= num_servers)
-
-    #     solution = solver.check()
-    #     if solution == unsat:
-    #         server_dict = {vm : model[v] for vm, v in zip(vms, V)}
-    #         return num_servers + 1, server_dict
-    #     elif solution == sat:
-    #         model = solver.model()
-    #         solver.pop()
-    #         print("Finished iteration with |S| = {}".format(num_servers))
-    #     else:
-    #         return None
-
-    return None
 
 def main():
     file_name = get_file_name()  
