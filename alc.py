@@ -10,6 +10,13 @@ class hardware:
 class server:
 
     def __init__(self, id, cpu_cap, ram_cap):
+        if (not isinstance(id, int)):
+            raise TypeError("{} must be of type {}".format(id, int))
+        if (not isinstance(cpu_cap, int)):
+            raise TypeError("{} must be of type {}".format(cpu_cap, int))
+        if (not isinstance(ram_cap, int)):
+            raise TypeError("{} must be of type {}".format(ram_cap, int))
+
         self.id = id
         self.cpu_cap = cpu_cap
         self.ram_cap = ram_cap
@@ -30,11 +37,22 @@ class server:
 class virtual_machine:
 
     def __init__(self, job_id, vm_index, cpu_req, ram_req, anti_collocation):
-       self.job_id = job_id
-       self.vm_index = vm_index
-       self.cpu_req = cpu_req
-       self.ram_req = ram_req
-       self.anti_collocation  = anti_collocation
+        if (not isinstance(job_id, int)):
+            raise TypeError("{} must be of type {}".format(job_id, int))
+        if (not isinstance(vm_index, int)):
+            raise TypeError("{} must be of type {}".format(vm_index, int))
+        if (not isinstance(cpu_req, int)):
+            raise TypeError("{} must be of type {}".format(cpu_req, int))
+        if (not isinstance(ram_req, int)):
+            raise TypeError("{} must be of type {}".format(ram_req, int))
+        if (not isinstance(anti_collocation, bool)):
+            raise TypeError("{} must be of type {}".format(anti_collocation, bool))
+
+        self.job_id = job_id
+        self.vm_index = vm_index
+        self.cpu_req = cpu_req
+        self.ram_req = ram_req
+        self.anti_collocation  = anti_collocation
 
     def __eq__(self, other):
         if isinstance(other, virtual_machine):
@@ -104,31 +122,28 @@ def main():
         return
 
     problem = get_problem(file_name)
+    servers = problem['servers']
+    vms     = problem['vms']
     
     solver = Solver()
-    
-    servers = problem['servers']
-    vms = problem['vms']
         
     #V = [Int('j%sv%s' %(vms[i].job_id, vms[i].vm_index)) for i in range(len(vms))]
-    
     V = [Int('VM%s' %i) for i in range(len(vms))]
-    
-    #at-most-one/at-least-one
+
+    # at-most-one/at-least-one
     at_cons = [ And(0 <= V[i], V[i] < len(servers)) for i in range(len(vms)) ]
     solver.add(at_cons)
     
-    #anti-collocation
-    num_jobs = vms[-1].job_id + 1
-    ac_matrix = [[] for i in range(num_jobs)] #list of lists where no vm can be on the same server as other
-    vm_index = 0
+    # anti-collocation
+    num_jobs  = vms[-1].job_id + 1
+    ac_matrix = [[] for i in range(num_jobs)]
+    vm_index  = 0
     
     print(num_jobs)
     
     for vm in vms:
         if(vm.anti_collocation):
             ac_matrix[vm.job_id].append(V[vm_index])
-        
         vm_index += 1
     
     print(ac_matrix)
@@ -136,30 +151,34 @@ def main():
     for i in range(num_jobs):
         if(len(ac_matrix[i]) > 1):
             ac_cons = [Distinct(ac_matrix[i])]
-            print(ac_cons)
             solver.add(ac_cons)
+
+            print(ac_cons)
     
-    #cardinality constraints
+    # cardinality constraints
     S = [ Function('s%s' %i, IntSort(), IntSort()) for i in range(len(servers))]
     
     for j in range(len(servers)):
         for i in range(len(vms)):
-            #not sure if it worked
+            # not sure if it worked
             tmp = (If(V[i] == j, S[j](V[i]) == 1, S[j](V[i]) == 0))
             solver.add(tmp)
     
     for i in range(len(servers)):
-        cpu_cons = (Sum([S[i](V[j]) * vms[j].cpu_req for j in range(len(vms))]) <= servers[i].cpu_cap)
-        ram_cons = (Sum([S[i](V[j]) * vms[j].ram_req for j in range(len(vms))]) <= servers[i].ram_cap)
-        
+        cpu_cons = (Sum([S[i](V[j]) * vms[j].cpu_req 
+                         for j in range(len(vms))]) <= servers[i].cpu_cap)
+        ram_cons = (Sum([S[i](V[j]) * vms[j].ram_req 
+                         for j in range(len(vms))]) <= servers[i].ram_cap)
         solver.add(cpu_cons)
         solver.add(ram_cons)
+
         print(cpu_cons)
         print(ram_cons)
     
     if solver.check() == sat:
-        print("Sat")
         m = solver.model()
+
+        print("Sat")
         print (m)
         print("______________DEBUG_________________")
         print("______________SERVER0_________________")
