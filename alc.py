@@ -68,6 +68,9 @@ class virtual_machine:
     def __repr__(self):
         return str(self)
 
+    def __hash__(self):
+        return (self.job_id * self.vm_index * self.cpu_req) % self.ram_req
+
 def get_program_args():
     """IO [String]
     Returns a list containing the program arguments.
@@ -92,7 +95,8 @@ def get_problem(file_name):
     if (not isinstance(file_name, str)):
         raise TypeError("file_name must be of type string")
 
-    problem = {"servers": [], "vms": []}
+    servers = []
+    vms = []
 
     with open(file_name) as f:
         num_servers = int(f.readline())
@@ -100,7 +104,7 @@ def get_problem(file_name):
         for _ in range(num_servers):
             server_id, cpu_cap, ram_cap = [int(x) for x in f.readline().split()]
             # print("server_id: {}, cpu_cap: {}, ram_cap: {}".format(server_id, cpu_cap, ram_cap))
-            problem["servers"] += [server(server_id, cpu_cap, ram_cap)]
+            servers += [server(server_id, cpu_cap, ram_cap)]
         num_vms = int(f.readline())
         # print("num_vms = {}".format(num_vms))
         for _ in range(num_vms):
@@ -108,29 +112,99 @@ def get_problem(file_name):
             job_id, vm_index, cpu_req, ram_req = [int(x) for x in line[:-1]]
             anti_collocation = (line[-1] == "True")
             # print("job_id: {}, vm_index: {}, cpu_req: {}, ram_req: {}, anti_collocation: {}".format(job_id, vm_index, cpu_req, ram_req, anti_collocation))
-            problem["vms"] += [virtual_machine(job_id, vm_index, cpu_req,
+            vms += [virtual_machine(job_id, vm_index, cpu_req,
                                               ram_req, anti_collocation)]
     # FIXME: experiment
-    # problem['vms'] = list(filter(lambda vm: vm.cpu_req != 1 or vm.ram_req != 1, problem['vms']))
+    # vms = list(filter(lambda vm: vm.cpu_req != 1 or vm.ram_req != 1, vms))
 
-    # print(problem)
-    return problem
+    return servers, vms
     
+def cardinality_constraints(servers, vms, V):
+    return [And(0 <= V[i], V[i] < len(servers)) for i, _ in enumerate(vms)]
 
-def print_solution(num_servers, model, V, vms):
-    print('o {}'.format(num_servers))
+def anti_collocation_constraints(servers, vms, V):
+    num_jobs  = vms[-1].job_id + 1
+    ac_matrix = [[] for i in range(num_jobs)]
 
-    for i, v in enumerate(V):
-        print('{} {} -> {}'.format(vms[i].job_id, vms[i].vm_index, model[v]))
+    for i, vm in enumerate(vms):
+        if(vm.anti_collocation):
+            ac_matrix[vm.job_id].append(V[i])
+    
+    constraints     = [[Distinct(j)] for j in ac_matrix if j]
+    min_num_servers = max([len(l) for l in ac_matrix])
 
-def cardinality_constraints():
-    pass
+    return min_num_servers, constraints
 
-def anti_collocation_constraints():
-    pass
+def server_capacity_constraints(servers, vms, V, S):
+    constraints = []
 
-def server_capacity_constraints():
-    pass
+    for j, _ in enumerate(servers):
+        for i, _ in enumerate(vms):
+            constraints += [If(V[i] == j, S[j](V[i]) == 1, S[j](V[i]) == 0)]
+    
+    for i, _ in enumerate(servers):
+        cpu_cons = (Sum([S[i](V[j]) * vms[j].cpu_req 
+                         for j, _ in enumerate(vms)]) <= servers[i].cpu_cap)
+        ram_cons = (Sum([S[i](V[j]) * vms[j].ram_req 
+                         for j, _ in enumerate(vms)]) <= servers[i].ram_cap)
+        constraints += [cpu_cons, ram_cons]
+
+    return constraints
+
+def solve(servers, vms):
+    V = [Int('VM{}'.format(i)) for i, _ in enumerate(vms)]
+    S = [Function('s{}'.format(i), IntSort(), IntSort()) for i, _ in enumerate(servers)]
+
+    solver = Solver()
+
+    #---------------------------------------------------------------------------
+    # Cardinality constraints
+    solver.add(cardinality_constraints(servers, vms, V))
+
+    #---------------------------------------------------------------------------
+    # Anti-collocation constraints
+    min_num_servers, constraints = anti_collocation_constraints(servers, vms, V)
+    for c in constraints: solver.add(c)
+   
+    #---------------------------------------------------------------------------
+    # Server capacity constraints
+    solver.add(server_capacity_constraints(servers, vms, V, S))
+
+    #---------------------------------------------------------------------------
+    # Search
+
+    # -. PUSH
+    # 1. Solve for "complex" VMs
+    # -. Push
+    # 2. Check if the solution holds when adding the "simple" VMs
+    # -. POP
+    # 3. If not, negate the model resulting from step 1 and add it to the solver as
+    #    a constraint. Go back to step 1.
+    # 4. If yes, try again for another (better) number of servers.
+    # -. POP
+
+    f = Function('f', IntSort(), IntSort())
+
+    for i, _ in enumerate(servers):
+        solver.add(If(Sum([S[i](v) for v in V]) >= 1, f(i) == 1, f(i) == 0))
+        
+    model = None
+    for num_servers in reversed(range(1, len(servers) + 1)):
+        solver.push()
+        solver.add(Sum([f(i) for i, _ in enumerate(servers)]) <= num_servers)
+
+        solution = solver.check()
+        if solution == unsat:
+            server_dict = {vm : model[v] for vm, v in zip(vms, V)}
+            return num_servers + 1, server_dict
+        elif solution == sat:
+            model = solver.model()
+            solver.pop()
+            print("Finished iteration with |S| = {}".format(num_servers))
+        else:
+            return None
+
+    return None
 
 def main():
     file_name = get_file_name()  
@@ -139,110 +213,18 @@ def main():
         print("USAGE: proj2 <scenario-file-name>")
         return
 
-    problem = get_problem(file_name)
-    servers = problem['servers']
-    vms     = problem['vms']
-    
-    solver = Solver()
-        
-    V = [Int('VM{}'.format(i)) for i, _ in enumerate(vms)]
+    servers, vms = get_problem(file_name)
+    result = solve(servers, vms)
 
-    #---------------------------------------------------------------------------
-    # Cardinality constraints
-    at_cons = [And(0 <= V[i], V[i] < len(servers)) for i, _ in enumerate(vms)]
-    solver.add(at_cons)
-    # print(at_cons)
-    
-    #---------------------------------------------------------------------------
-    # Anti-collocation constraints
-    num_jobs  = vms[-1].job_id + 1
-    ac_matrix = [[] for i in range(num_jobs)]
-    # print(num_jobs)
+    if result is None:
+        print('Bug: Found no solution.')
+        return
 
-    for i, vm in enumerate(vms):
-        if(vm.anti_collocation):
-            ac_matrix[vm.job_id].append(V[i])
-    # print(ac_matrix)
-    
-    for j in ac_matrix:
-        if j:
-            ac_cons = [Distinct(j)]
-            solver.add(ac_cons)
-            # print(ac_cons)
-    
-    min_num_servers = max([len(l) for l in ac_matrix])
-    # print(min_num_servers)
-    
-    #---------------------------------------------------------------------------
-    # Server capacity constraints
-    S = [Function('s{}'.format(i), IntSort(), IntSort()) for i, _ in enumerate(servers)]
-    
-    for j, _ in enumerate(servers):
-        for i, _ in enumerate(vms):
-            solver.add(If(V[i] == j, S[j](V[i]) == 1, S[j](V[i]) == 0))
-    
-    for i, _ in enumerate(servers):
-        cpu_cons = (Sum([S[i](V[j]) * vms[j].cpu_req 
-                         for j, _ in enumerate(vms)]) <= servers[i].cpu_cap)
-        ram_cons = (Sum([S[i](V[j]) * vms[j].ram_req 
-                         for j, _ in enumerate(vms)]) <= servers[i].ram_cap)
-        solver.add(cpu_cons)
-        solver.add(ram_cons)
+    num_servers, server_dict = result
 
-        # print(cpu_cons)
-        # print(ram_cons)
-    
-    #---------------------------------------------------------------------------
-    # Search
-
-    # X(i) is 1 if server i is ON and 0 otherwise.
-    f = Function('f', IntSort(), IntSort())
-
-    for i, _ in enumerate(servers):
-        tmp = (If(Sum([S[i](v) for v in V]) >= 1, f(i) == 1, f(i) == 0))
-        solver.add(tmp)
-        # print(tmp)
-    
-    last_sat_model = None
-    for num_servers in reversed(range(1, len(servers) + 1)):
-    # for num_servers in range(min_num_servers, len(servers) + 1):
-        solver.push()
-        solver.add(Sum([f(i) for i, _ in enumerate(servers)]) <= num_servers)
-
-        if solver.check() != sat:
-            print_solution(num_servers + 1, last_sat_model, V, vms)
-            return
-
-        last_sat_model = solver.model()
-
-        solver.pop()
-
-        print("Finished iteration with |S| = {}".format(num_servers))
-
-    
-# -. PUSH
-# 1. Solve for "complex" VMs
-# -. Push
-# 2. Check if the solution holds when adding the "simple" VMs
-# -. POP
-# 3. If not, negate the model resulting from step 1 and add it to the solver as
-#    a constraint. Go back to step 1.
-# 4. If yes, try again for another (better) number of servers.
-# -. POP
+    print('o {}'.format(num_servers))
+    for vm in vms:
+        print('{} {} -> {}'.format(vm.job_id, vm.vm_index, server_dict[vm]))
 
 if __name__ == "__main__":
     main()
-
-
-        # print("Sat")
-        # print(m)
-        # print("______________DEBUG_________________")
-        # for i, _ in enumerate(servers):
-        #     print("______________SERVER_{}_________________".format(i))
-        #     for j, _ in enumerate(vms):
-        #         print(m.evaluate(S[i](V[j])))
-        # print("________________END___________________")
-        
-        # if solver.check() == unsat:
-        #     print("Unsat")
-
