@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-
-# import pdb
+# encoding: utf-8
 
 from copy import deepcopy
 from itertools import *
@@ -28,8 +27,7 @@ class server:
 
     def __eq__(self, other):
         if isinstance(other, server):
-            return self.cpu_cap == other.cpu_cap \
-               and self.ram_cap == other.ram_cap
+            return self.id == other.id
         return False
 
     def __str__(self):
@@ -67,9 +65,7 @@ class virtual_machine:
 
     def __eq__(self, other):
         if isinstance(other, virtual_machine):
-            return self.cpu_req == other.cpu_req \
-               and self.ram_req == other.ram_req \
-               and self.anti_collocation == other.anti_collocation
+            return self.id == other.id
         return False
 
     def __str__(self):
@@ -82,7 +78,6 @@ class virtual_machine:
 
     def __hash__(self):
         return self.id
-
 
 def get_program_args():
     """IO [String]
@@ -127,9 +122,6 @@ def get_problem(file_name):
             # print("job_id: {}, vm_index: {}, cpu_req: {}, ram_req: {}, anti_collocation: {}".format(job_id, vm_index, cpu_req, ram_req, anti_collocation))
             vms += [virtual_machine(vm_id, job_id, vm_index, cpu_req,
                                     ram_req, anti_collocation)]
-    # FIXME: experiment
-    # vms = list(filter(lambda vm: vm.cpu_req != 1 or vm.ram_req != 1, vms))
-
     return servers, vms
 
 def cardinality_constraints(servers, vms, V):
@@ -163,8 +155,11 @@ def server_capacity_constraints(servers, vms, V, S):
 
     return constraints
 
-def assign(servers, simple_vms, partial_assignment):
-    servers_ = [deepcopy(s) for s in partial_assignment.keys()]
+def assign(simple_vms, partial_assignment):
+    if not simple_vms:
+        return partial_assignment
+
+    servers_ = [deepcopy(s) for s in partial_assignment]
 
     for s in servers_:
         for vm in partial_assignment[s]:
@@ -177,14 +172,18 @@ def assign(servers, simple_vms, partial_assignment):
     if sum(key(s) for s in servers_) < len(simple_vms):
         return None
 
-    servers_ = sorted(servers_, key=key, reverse=True)
+    servers_        = sorted(servers_, key =key, reverse =True)
 
-    full_assignment = {s : [] for s in servers_}
+    ac_vms          = [vm for vm in simple_vms if vm.anti_collocation]
+    not_ac_vms      = [vm for vm in simple_vms if not vm.anti_collocation]
+    vms_            = sorted(ac_vms, key=lambda v: v.id) + not_ac_vms 
 
-    for vm in simple_vms:
+    full_assignment = {s : partial_assignment[s] for s in servers_}
+
+    for vm in vms_:
         placed = True
 
-        for s in servers_:
+        for s in full_assignment:
             if place(vm, s, full_assignment) is not None:
                 break
         else:
@@ -196,7 +195,11 @@ def assign(servers, simple_vms, partial_assignment):
     return full_assignment
 
 def place(vm, server, assignment):
-    if server.cpu_cap == 0 or server.ram_cap == 0:
+    assert(vm.cpu_req == vm.ram_req == 1)
+
+    if vm in assignment[server]:
+        return None
+    elif server.cpu_cap == 0 or server.ram_cap == 0:
         return None
     elif vm.anti_collocation and \
          [v for v in assignment[server] if v.job_id == vm.job_id and v.anti_collocation]:
@@ -206,7 +209,6 @@ def place(vm, server, assignment):
         server.cpu_cap -= 1
         server.ram_cap -= 1
         return assignment
-
 
 def assignment_from_model(servers, vms, V, model):
     """
@@ -221,30 +223,31 @@ def assignment_from_model(servers, vms, V, model):
     assignment = {s : assignment_[s.id] for s in servers if assignment_[s.id]}
     return assignment
 
-def solve(servers, vms):
-    key = lambda vm: vm.cpu_req != 1 or vm.ram_req != 1
+def basic_solve(servers, vms):
+    jobs            = [list(g) for _, g in groupby(vms, lambda v: v.job_id)]
+    ac_matrix       = [list(filter(lambda vm: vm.anti_collocation, j)) for j in jobs]
+    min_num_servers = max(map(len, ac_matrix))
 
+    servers = sorted(servers, key=lambda s: min(s.cpu_cap, s.ram_cap), reverse=True)
+
+    for num_servers in range(min_num_servers, len(servers) + 1):
+        assignment = assign(vms, {s: [] for s in servers[0:num_servers]})
+
+        if assignment is not None:
+            return assignment
+    # Bug.
+    return None
+
+def solve(servers, vms):
+    key         = lambda vm: vm.cpu_req != 1 or vm.ram_req != 1
     complex_vms = list(filter(key, vms))
 
     if not complex_vms:
-        # The problem can be solved with a polynomial solution.
-
-        jobs            = [list(g) for _, g in groupby(vms, lambda v: v.job_id)]
-        ac_matrix       = [list(filter(lambda vm: vm.anti_collocation, j)) for j in jobs]
-        min_num_servers = max(map(len, ac_matrix))
-
-        servers = sorted(servers, key=lambda s: min(s.cpu_cap, s.ram_cap), reverse=True)
-
-        for num_servers in range(min_num_servers, len(servers) + 1):
-            assignment = {s : [] for s in servers[0:num_servers]}
-            assignment = assign(servers, vms, assignment)
-
-            if assignment is not None:
-                return assignment
-        # Bug.
-        return None
+       return basic_solve(servers, vms)
 
     simple_vms = list(filterfalse(key, vms))
+
+    #---------------------------------------------------------------------------
 
     V = {vm : Int('VM{}'.format(vm.id)) for vm in complex_vms}
     S = {s : Function('s{}'.format(s.id), IntSort(), IntSort()) for s in servers}
@@ -252,10 +255,10 @@ def solve(servers, vms):
     # FIXME: Do we really need this?
     f = Function('f', IntSort(), IntSort())
 
+    #---------------------------------------------------------------------------
+
     solver = Solver()
 
-
-    # 1. Solve for "complex" VMs
     solver.add(cardinality_constraints(servers, complex_vms, V))
 
     min_num_servers, constraints = anti_collocation_constraints(servers, complex_vms, V)
@@ -268,6 +271,8 @@ def solve(servers, vms):
                       f(s.id) == 1,
                       f(s.id) == 0))
 
+    #---------------------------------------------------------------------------
+
     model = None
     full_assignment = None
     for num_servers in reversed(range(1, len(servers) + 1)):
@@ -275,18 +280,21 @@ def solve(servers, vms):
 
         solver.add(Sum([f(s.id) for s in servers]) <= num_servers)
 
-        if solver.check() == unsat:
+        result = solver.check()
+
+        if result == unsat:
             break
 
-        while solver.check() == sat:
+        while result == sat:
             # Check if the solution holds when adding the "simple" VMs.
             model = solver.model()
             partial_assignment = assignment_from_model(servers, vms, V, model)
-            assignment_ = assign(servers, simple_vms, partial_assignment)
+            assignment_ = assign(simple_vms, partial_assignment)
 
             if assignment_ is None:
                 # Doesn't hold, which implies that the problem may be (!) unsat.
                 solver.add(Or([v != model[v] for _, v in V.items()]))
+                result = solver.check()
             else:
                 # Its sat, but maybe there is a better solution.
                 full_assignment = assignment_
@@ -297,11 +305,8 @@ def solve(servers, vms):
 
     return full_assignment
 
-def main():
-    file_name = get_file_name()
-    # file_name = 'input/01.in'
-
-    if (file_name == ""):
+def main(file_name=''):
+    if (file_name == ''):
         print("USAGE: proj2 <scenario-file-name>")
         return
 
@@ -325,4 +330,4 @@ def main():
         print('{} {} -> {}'.format(vm.job_id, vm.vm_index, server_dict[vm].id))
 
 if __name__ == "__main__":
-    main()
+    main(get_file_name())
