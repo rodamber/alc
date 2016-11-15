@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import pdb
+# import pdb
 
 from copy import deepcopy
 from itertools import *
@@ -177,16 +177,36 @@ def assign(servers, simple_vms, partial_assignment):
     if sum(key(s) for s in servers_) < len(simple_vms):
         return None
 
-    servers_ = sorted(servers, key=key, reverse=True)
+    servers_ = sorted(servers_, key=key, reverse=True)
 
-    i = 0
     full_assignment = {s : [] for s in servers_}
 
-    for s in servers_:
-        full_assignment[s] = simple_vms[i:i + key(s)]
-        i += key(s)
+    for vm in simple_vms:
+        placed = True
+
+        for s in servers_:
+            if place(vm, s, full_assignment) is not None:
+                break
+        else:
+            placed = False
+
+        if placed == False:
+            return None
 
     return full_assignment
+
+def place(vm, server, assignment):
+    if server.cpu_cap == 0 or server.ram_cap == 0:
+        return None
+    elif vm.anti_collocation and \
+         [v for v in assignment[server] if v.job_id == vm.job_id and v.anti_collocation]:
+        return None
+    else:
+        assignment[server] += [vm]
+        server.cpu_cap -= 1
+        server.ram_cap -= 1
+        return assignment
+
 
 def assignment_from_model(servers, vms, V, model):
     """
@@ -278,10 +298,8 @@ def solve(servers, vms):
     return full_assignment
 
 def main():
-    pdb.set_trace()
-
-    # file_name = get_file_name()
-    file_name = 'input/01.in'
+    file_name = get_file_name()
+    # file_name = 'input/01.in'
 
     if (file_name == ""):
         print("USAGE: proj2 <scenario-file-name>")
