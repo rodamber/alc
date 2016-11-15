@@ -133,6 +133,7 @@ def anti_collocation_constraints(servers, vms, V):
 
     for vm in vms:
         if(vm.anti_collocation):
+            # FIXME: There is a bug here!
             ac_matrix[vm.job_id].append(V[vm])
 
     constraints     = [Distinct(j) for j in ac_matrix if j]
@@ -215,7 +216,7 @@ def assignment_from_model(servers, vms, V, model):
     Returns a dictionary of (s, vms_) pairs, where vms_ are the virtual machines
     assigned to server s.
     """
-    assignment_ = [[]] * len(servers)
+    assignment_ = [[] for s in servers]
 
     for vm, v in V.items():
         assignment_[model[v].as_long()] += [vm]
@@ -275,9 +276,10 @@ def solve(servers, vms):
 
     model = None
     full_assignment = None
-    for num_servers in reversed(range(1, len(servers) + 1)):
+    for num_servers in reversed(range(min_num_servers, len(servers) + 1)):
         solver.push()
 
+        # FIXME: <= or == ?
         solver.add(Sum([f(s.id) for s in servers]) <= num_servers)
 
         result = solver.check()
@@ -299,7 +301,7 @@ def solve(servers, vms):
                 # Its sat, but maybe there is a better solution.
                 full_assignment = assignment_
                 break
-        print("Finished iteration with |S| = {}".format(num_servers))
+        # print("Finished iteration with |S| = {}".format(num_servers))
 
         solver.pop()
 
