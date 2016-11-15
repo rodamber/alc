@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 
 import sys
+
+from copy import deepcopy
+from itertools import filterfalse
 from z3 import *
 
 class hardware:
@@ -25,7 +28,7 @@ class server:
         if isinstance(other, server):
             return self.cpu_cap == other.cpu_cap \
                and self.ram_cap == other.ram_cap
-        return false
+        return False
 
     def __str__(self):
         template = '{{id: {}, cpu_cap: {}, ram_cap: {}}}'
@@ -33,6 +36,9 @@ class server:
 
     def __repr__(self):
         return str(self)
+
+    def __hash__(self):
+        return self.id
 
 class virtual_machine:
 
@@ -62,6 +68,7 @@ class virtual_machine:
             return self.cpu_req == other.cpu_req \
                and self.ram_req == other.ram_req \
                and self.anti_collocation == other.anti_collocation
+        return False
 
     def __str__(self):
         template = '{{job_id: {}, vm_index: {}, cpu_req: {}, ram_req: {}, ac: {}}}'
@@ -72,7 +79,8 @@ class virtual_machine:
         return str(self)
 
     def __hash__(self):
-        return (self.job_id * self.vm_index * self.cpu_req) % self.ram_req
+        return self.id
+     
 
 def get_program_args():
     """IO [String]
@@ -155,22 +163,54 @@ def server_capacity_constraints(servers, vms, V, S):
 
     return constraints
 
+def assign(servers, simple_vms, partial_assignment):
+    servers_ = deepcopy(servers)
+
+    for s in servers_:
+        for vm in partial_assignment[s]:
+            s.cpu_cap -= vm.cpu_req
+            s.ram_cap -= vm.ram_req
+
+    key = lambda s: min(s.cpu_cap, s.ram_cap)
+
+    # Is there enough space?
+    if sum(key(s) for s in servers_) < len(simple_vms):
+        return None
+
+    servers_ = sorted(servers, key=key, reverse=True)
+
+    i = 0
+    full_assignment = {s : [] for s in servers_}
+
+    for s in servers_:
+        full_assignment[s] = simple_vms[i:i + key(s)]
+        i += key(s)
+
+    return full_assignment
+
+
 def solve(servers, vms):
-    V = [Int('VM{}'.format(vm.id)) for vm in vms]
-    S = [Function('s{}'.format(s.id), IntSort(), IntSort()) for s in servers]
-    f = Function('f', IntSort(), IntSort())
+    assignments = {servers[0]: [], 
+                   servers[1]: [], 
+                   servers[2]: [], 
+                   servers[3]: [], }
 
-    solver = Solver()
+    key = lambda vm: vm.cpu_req != 1 or vm.ram_req != 1
 
-    #---------------------------------------------------------------------------
-    # Search
+    complex_vms = list(filter(key, vms))
+    simple_vms = list(filterfalse(key, vms))
 
-    # complex_vms = list(filter(lambda vm: vm.cpu_req != 1 or vm.ram_req != 1, vms))
-    # simple_vms = list(set(vms) - set(complex_vms))
+    return assign(servers, simple_vms, assignments)
+
+    # V = [Int('VM{}'.format(vm.id)) for vm in vms]
+    # S = [Function('s{}'.format(s.id), IntSort(), IntSort()) for s in servers]
+    # f = Function('f', IntSort(), IntSort())
+
+    # solver = Solver()
 
     # solver.push()
 
-    # # 1. Solve for "complex" VMs
+    # # # 1. Solve for "complex" VMs
     # solver.add(cardinality_constraints(servers, complex_vms, V))
 
     # min_num_servers, constraints = anti_collocation_constraints(servers, complex_vms, V)
@@ -178,63 +218,16 @@ def solve(servers, vms):
 
     # solver.add(server_capacity_constraints(servers, complex_vms, V, S))
 
-    # solver.push()
-    # # 2. Check if the solution holds when adding the "simple" VMs
-    # solver.pop()
-    # # 3. If not, negate the model resulting from step 1 and add it to the solver as
-    # #    a constraint. Go back to step 1.
-    # # 4. If yes, try again for another (better) number of servers.
-    # solver.pop()
-
-    #---------------------------------------------------------------------------
-    # Cardinality constraints
-    solver.add(cardinality_constraints(servers, vms, V))
-
-    #---------------------------------------------------------------------------
-    # Anti-collocation constraints
-    min_num_servers, constraints = anti_collocation_constraints(servers, vms, V)
-    for c in constraints: solver.add(c)
-   
-    #---------------------------------------------------------------------------
-    # Server capacity constraints
-    solver.add(server_capacity_constraints(servers, vms, V, S))
-
-    for s in servers:
-        solver.add(If(Sum([S[s.id](v) for v in V]) >= 1, 
-                      f(s.id) == 1, 
-                      f(s.id) == 0))
-        
-    model = None
-    for num_servers in reversed(range(1, len(servers) + 1)):
-        solver.push()
-        solver.add(Sum([f(s.id) for s in servers]) <= num_servers)
-
-        solution = solver.check()
-        if solution == unsat:
-            server_dict = {vm : model[v] for vm, v in zip(vms, V)}
-            return num_servers + 1, server_dict
-        elif solution == sat:
-            model = solver.model()
-            solver.pop()
-            print("Finished iteration with |S| = {}".format(num_servers))
-        else:
-            return None
-
+    # for s in servers:
+    #     solver.add(If(Sum([S[s.id](v) for v in V]) >= 1, 
+    #                   f(s.id) == 1, 
+    #                   f(s.id) == 0))
+ 
+    # # # 2. Check if the solution holds when adding the "simple" VMs
+    # # # 3. If not, negate the model resulting from step 1 and add it to the solver as
+    # # #    a constraint. Go back to step 1.
+    # # # 4. If yes, try again for another (better) number of servers.
     return None
-
-
-    #---------------------------------------------------------------------------
-    # Cardinality constraints
-    # solver.add(cardinality_constraints(servers, vms, V))
-
-    #---------------------------------------------------------------------------
-    # Anti-collocation constraints
-    # min_num_servers, constraints = anti_collocation_constraints(servers, vms, V)
-    # for c in constraints: solver.add(c)
-   
-    #---------------------------------------------------------------------------
-    # Server capacity constraints
-    # solver.add(server_capacity_constraints(servers, vms, V, S))
 
 def main():
     file_name = get_file_name()  
@@ -244,17 +237,23 @@ def main():
         return
 
     servers, vms = get_problem(file_name)
-    result = solve(servers, vms)
+    assignment = solve(servers, vms)
 
-    if result is None:
+    if assignment is None:
         print('Bug: Found no solution.')
         return
 
-    num_servers, server_dict = result
+    server_dict = {vm: s for s in assignment for vm in assignment[s]}
+
+    for s in assignment.keys():
+        for vm in assignment[s]:
+            server_dict[vm] = s
+
+    num_servers = len([s for s in assignment if assignment[s]])
 
     print('o {}'.format(num_servers))
     for vm in vms:
-        print('{} {} -> {}'.format(vm.job_id, vm.vm_index, server_dict[vm]))
+        print('{} {} -> {}'.format(vm.job_id, vm.vm_index, server_dict[vm].id))
 
 if __name__ == "__main__":
     main()
