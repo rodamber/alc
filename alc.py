@@ -128,13 +128,8 @@ def cardinality_constraints(servers, vms, V):
     return [And(0 <= V[vm], V[vm] < len(servers)) for vm in vms]
 
 def anti_collocation_constraints(servers, vms, V):
-    num_jobs = len({vm.job_id for vm in vms})
-    ac_matrix = [[] for _ in range(num_jobs)]
-
-    for vm in vms:
-        if(vm.anti_collocation):
-            # FIXME: There is a bug here!
-            ac_matrix[vm.job_id].append(V[vm])
+    jobs            = [list(g) for _, g in groupby(vms, lambda v: v.job_id)]
+    ac_matrix       = [[V[vm] for vm in job if vm.anti_collocation] for job in jobs]
 
     constraints     = [Distinct(j) for j in ac_matrix if j]
     min_num_servers = max([len(j) for j in ac_matrix])
