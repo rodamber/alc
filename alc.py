@@ -173,11 +173,15 @@ def assign(simple_vms, partial_assignment):
     if sum(key(s) for s in servers_) < len(simple_vms):
         return None
 
-    servers_        = sorted(servers_, key =key, reverse =True)
+    servers_ = sorted(servers_, key =key, reverse =True)
 
-    ac_vms          = [vm for vm in simple_vms if vm.anti_collocation]
-    not_ac_vms      = [vm for vm in simple_vms if not vm.anti_collocation]
-    vms_            = sorted(ac_vms, key=lambda v: v.id) + not_ac_vms 
+    ac_vms = sorted([vm for vm in simple_vms if vm.anti_collocation], 
+                    key=lambda v: v.job_id)
+    ac_matrix = [list(g) for _, g in groupby(ac_vms, lambda v: v.job_id)]
+    ac_vms = [x for job in sorted(ac_matrix, key=len, reverse=True) for x in job]
+
+    not_ac_vms = [vm for vm in simple_vms if not vm.anti_collocation]
+    vms_       = ac_vms + not_ac_vms 
 
     full_assignment = {s : partial_assignment[s] for s in servers_}
 
@@ -236,7 +240,6 @@ def basic_solve(servers, vms):
 
         if assignment is not None:
             return assignment
-    # Bug.
     return None
 
 def solve(servers, vms):
