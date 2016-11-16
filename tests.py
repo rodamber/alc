@@ -358,7 +358,6 @@ class TestSolve(unittest.TestCase):
         self.assertIsNotNone(assignment)
         self.assertEqual(5, len(assignment))
 
-
 class TestMain(unittest.TestCase):
     pass
 

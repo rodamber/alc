@@ -273,37 +273,55 @@ def solve(servers, vms):
     #---------------------------------------------------------------------------
 
     model = None
-    full_assignment = None
-    for num_servers in reversed(range(min_num_servers, len(servers) + 1)):
+    assignment = None
+    for num_servers in range(min_num_servers, len(servers) + 1):
         solver.push()
 
         # FIXME: <= or == ?
-        solver.add(Sum([f(s.id) for s in servers]) <= num_servers)
+        solver.add(Sum([f(s.id) for s in servers]) == num_servers)
 
-        result = solver.check()
+        print('num_servers = {}'.format(num_servers))
+        i = 0
+        while solver.check() == sat:
+            i += 1
+            print('i = {}'.format(i))
 
-        if result == unsat:
-            break
-
-        while result == sat:
             # Check if the solution holds when adding the "simple" VMs.
             model = solver.model()
             partial_assignment = assignment_from_model(servers, vms, V, model)
-            assignment_ = assign(simple_vms, partial_assignment)
 
-            if assignment_ is None:
+            # Is there enough space for the rest of the vms? If not, don't
+            # bother continuing the loop.
+            if not enough_space(simple_vms, partial_assignment):
+                print('Ups. Not enough space (i = {})'.format(i))
+                break
+
+            assignment = assign(simple_vms, partial_assignment)
+
+            if assignment is None:
                 # Doesn't hold, which implies that the problem may be (!) unsat.
                 solver.add(Or([v != model[v] for _, v in V.items()]))
-                result = solver.check()
             else:
-                # Its sat, but maybe there is a better solution.
-                full_assignment = assignment_
-                break
-        # print("Finished iteration with |S| = {}".format(num_servers))
+                return assignment
+        print("Finished iteration with |S| = {}".format(num_servers))
 
         solver.pop()
 
-    return full_assignment
+    # Bug.
+    return None
+
+def enough_space(vms, partial_assignment):
+    servers_ = [deepcopy(s) for s in partial_assignment]
+
+    for s in servers_:
+        for vm in partial_assignment[s]:
+            s.cpu_cap -= vm.cpu_req
+            s.ram_cap -= vm.ram_req
+
+    key = lambda s: min(s.cpu_cap, s.ram_cap)
+    return sum(key(s) for s in servers_) < len(vms)
+
+
 
 def main(file_name=''):
     if (file_name == ''):
