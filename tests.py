@@ -46,12 +46,12 @@ class TestAssignmentFromModel(unittest.TestCase):
 
         solver = Solver()
 
-        solver.add(cardinality_constraints(self.servers, self.vms, V))
+        solver.add(cardinality_constraints(V, S))
 
-        min_num_servers, constraints = anti_collocation_constraints(self.servers, self.vms, V)
+        min_num_servers, constraints = anti_collocation_constraints(V)
         solver.add(constraints)
 
-        solver.add(server_capacity_constraints(self.servers, self.vms, V, S))
+        solver.add(server_capacity_constraints(V, S))
 
         for s in self.servers:
             solver.add(If(Sum([S[s](v) for _, v in V.items()]) >= 1, f(s.id) == 1, f(s.id) == 0))
