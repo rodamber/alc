@@ -6,10 +6,6 @@ from itertools import *
 
 import sys
 
-import random
-from datetime import datetime
-random.seed(datetime.now())
-
 from z3 import *
 
 class hardware:
@@ -113,18 +109,14 @@ def get_problem(file_name):
 
     with open(file_name) as f:
         num_servers = int(f.readline())
-        # print("num_servers = {}".format(num_servers))
         for _ in range(num_servers):
             server_id, cpu_cap, ram_cap = [int(x) for x in f.readline().split()]
-            # print("server_id: {}, cpu_cap: {}, ram_cap: {}".format(server_id, cpu_cap, ram_cap))
             servers += [server(server_id, cpu_cap, ram_cap)]
         num_vms = int(f.readline())
-        # print("num_vms = {}".format(num_vms))
         for vm_id in range(num_vms):
             line = f.readline().split()
             job_id, vm_index, cpu_req, ram_req = [int(x) for x in line[:-1]]
             anti_collocation = (line[-1] == "True")
-            # print("job_id: {}, vm_index: {}, cpu_req: {}, ram_req: {}, anti_collocation: {}".format(job_id, vm_index, cpu_req, ram_req, anti_collocation))
             vms += [virtual_machine(vm_id, job_id, vm_index, cpu_req,
                                     ram_req, anti_collocation)]
     return servers, vms
@@ -153,39 +145,6 @@ def server_capacity_constraints(V, S):
 
     return constraints
 
-def cantor_pairing(a, b):
-    return 0.5 * (a + b) * (a + b + 1) + b
-
-def server_symmetry_breaking_constraints(V, S, mode='safe'):
-    key = lambda s: cantor_pairing(s.cpu_cap, s.ram_cap)
-
-    equals = [list(g) for _, g in groupby(sorted(S.keys(), key=key), key)]
-
-    # This is the set of sets of servers that are equal to each other.
-    equals = [x for x in equals if len(x) > 1]
-
-    jobs      = [list(g) for _, g in groupby(V.keys(), lambda v: v.job_id)]
-    ac_matrix = [[V[vm] for vm in job if vm.anti_collocation] for job in jobs]
-
-    constraints = []
-
-    if mode == 'safe':
-        for job in ac_matrix:
-            v = random.choice(job)
-            # v = list(max(v_equals, key=len))[0]
-            for ss in equals:
-                for s in ss[1:]:
-                    constraints.append(v != s.id)
-    elif mode == 'unsafe':
-        for job in ac_matrix:
-            for i, v in enumerate(job):
-                for ss in equals:
-                    for s in ss[:i] + ss[i+1:]:
-                        constraints.append(v != s.id)
-    else:
-        raise RuntimeError('mode must be either \'safe\' or \'unsafe\'')
-    return constraints
-
 def assignment_from_model(servers, V, model):
     """
     Returns a dictionary of (s, vms_) pairs, where vms_ are the virtual machines
@@ -204,8 +163,7 @@ def solve(servers, vms):
     S = {s : Function('s{}'.format(s.id), IntSort(), IntSort()) for s in servers}
 
     formula = cardinality_constraints(V, S) + \
-              server_capacity_constraints(V, S) #+ \
-              # server_symmetry_breaking_constraints(V, S, mode='safe')
+              server_capacity_constraints(V, S)
 
     min_num_servers, cs = anti_collocation_constraints(V)
     formula += cs
@@ -216,43 +174,26 @@ def solve(servers, vms):
         formula.append(If(Sum([s(v) for v in V.values()]) >= 1,
                           on(server.id) == 1, on(server.id) == 0))
 
-    # Some extra clauses to (hopefully) make it faster
+    # Some extra clauses to make it faster
     #-------------------------------------------------
     formula += [Sum([on(s.id) * s.cpu_cap for s in S]) >= sum([v.cpu_req for v in V]),
                 Sum([on(s.id) * s.ram_cap for s in S]) >= sum([v.ram_req for v in V])]
-
-    # Becomes too slow
-    #-----------------
-    # formula += [Implies(srv.cpu_cap < vm.cpu_req, s(v) == 0)
-    #             for srv, s in S.items() for vm, v in V.items()]
-    # formula += [Implies(srv.ram_cap < vm.ram_req, s(v) == 0)
-    #             for srv, s in S.items() for vm, v in V.items()]
-
-    def better(s1, s2):
-        return (s1.cpu_cap >  s2.cpu_cap and s1.ram_cap >= s2.ram_cap) or \
-               (s1.cpu_cap >= s2.cpu_cap and s1.ram_cap >  s2.ram_cap)
-
-    # Becomes too slow
-    #-----------------
-    # formula += [Implies(on(srv2.id) == 1, on(srv1.id) == 1)
-    #             for srv1 in S for srv2 in S if better(srv1, srv2)]
 
     solver = Solver()
     solver.add(formula)
 
     for num_servers in range(min_num_servers, len(servers) + 1):
-        print("On iteration with number of servers = {}".format(num_servers))
-
         solver.push()
+
+        # We only want num_servers servers to be on.
         solver.add(Sum([on(s.id) for s in servers]) == num_servers)
 
 
-        #-----------------------------
-        # Unsafe try
-        #-----------------------------
-        # First try
-        #-----------------------------
-        print('unsafe 1')
+        # The following are unsafe attempts, as they're not guaranteed to work.
+        # If not we continue as normal, using a safe approach.
+
+        # First try. We're saying that the num_servers servers with the most ram
+        # should be on.
         solver.push()
 
         ss = sorted(S.keys(), key=lambda s: s.ram_cap, reverse=True)
@@ -261,14 +202,11 @@ def solve(servers, vms):
             solver.add(on(s.id) == 1)
 
         if solver.check() == sat:
-            print('Good call.')
             return assignment_from_model(servers, V, solver.model())
 
         solver.pop()
 
-        # Second try
-        #-----------------------------
-        print('unsafe 2')
+        # Second try. Same as above, but for the cpu.
         solver.push()
 
         ss = sorted(S.keys(), key=lambda s: s.cpu_cap, reverse=True)
@@ -277,14 +215,10 @@ def solve(servers, vms):
             solver.add(on(s.id) == 1)
 
         if solver.check() == sat:
-            print('Good call.')
             return assignment_from_model(servers, V, solver.model())
 
         solver.pop()
-
-        print('nope')
-        #-----------------------------
-        # End of unsafe try
+        # End of unsafe attempts
 
         result = solver.check()
         if result == unknown:
