@@ -253,7 +253,7 @@ def solve(servers, vms):
 
         result = solver.check()
         if result == unknown:
-            raise Z3Exception("failed")
+            raise Z3Exception("Bug: unknown")
         elif result == sat:
             return assignment_from_model(servers, V, solver.model())
         solver.pop()

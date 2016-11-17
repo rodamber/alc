@@ -2,7 +2,6 @@
 # encoding: utf-8
 
 import unittest
-import pytest
 
 from alc import *
 
@@ -55,194 +54,74 @@ class TestAssignmentFromModel(unittest.TestCase):
         self.maxDiff = None
         self.assertEqual(len(assignment), len(assignment_))
 
-class TestSolveSimple(unittest.TestCase):
+class TestSolve(unittest.TestCase):
 
-    def setUp(self):
-        self.servers = [server(0, 5, 2), server(1, 4, 1), server(2, 7, 3),
-                        server(3, 8, 5)]
-        self.s0, self.s1, self.s2, self.s3 = self.servers
-        self.vms = [virtual_machine(0, 0, 0, 1, 1, True),
-                    virtual_machine(1, 0, 1, 1, 1, True),
-                    virtual_machine(2, 1, 0, 1, 1, False),
-                    virtual_machine(3, 2, 0, 1, 1, True),
-                    virtual_machine(4, 2, 1, 1, 1, True),
-                    virtual_machine(5, 2, 2, 1, 1, False),
-                    virtual_machine(6, 3, 0, 1, 1, True),
-                    virtual_machine(7, 3, 1, 1, 1, True)]
-        self.v0, self.v1, self.v2, self.v3, self.v4, self.v5, self.v6, self.v7 = self.vms
+    def meta_test(self, file, result):
+        servers, vms = get_problem(file)
+        assignment = solve(servers, vms)
 
-    def test_1st_project_example(self):
-        result = solve(self.servers, self.vms)
-        self.assertIsNotNone(result)
-        self.assertEqual(2, len(result))
+        self.assertIsNotNone(assignment)
+        self.assertEqual(result, len(assignment))
 
     def test_bench11_small_1(self):
-        servers, vms = get_problem('input/bench11-small/s32-vm25p-map0p-1-111c-small.desc')
-        assignment   = solve(servers, vms)
-
-        self.assertIsNotNone(assignment)
-        self.assertEqual(8, len(assignment))
+        self.meta_test('input/bench11-small/s32-vm25p-map0p-1-111c-small.desc', 8)
 
     def test_bench11_small_2(self):
-        servers, vms = get_problem('input/bench11-small/s32-vm25p-map0p-2-111c-small.desc')
-        assignment   = solve(servers, vms)
-
-        self.assertIsNotNone(assignment)
-        self.assertEqual(7, len(assignment))
+        self.meta_test('input/bench11-small/s32-vm25p-map0p-2-111c-small.desc', 7)
 
     def test_bench11_small_3(self):
-        servers, vms = get_problem('input/bench11-small/s32-vm25p-map0p-3-111c-small.desc')
-        assignment   = solve(servers, vms)
-
-        self.assertIsNotNone(assignment)
-        self.assertEqual(7, len(assignment))
+        self.meta_test('input/bench11-small/s32-vm25p-map0p-3-111c-small.desc', 7)
 
     def test_bench11_small_4(self):
-        servers, vms = get_problem('input/bench11-small/s32-vm50p-map0p-4-111c-small.desc')
-        assignment   = solve(servers, vms)
-
-        self.assertIsNotNone(assignment)
-        self.assertEqual(7, len(assignment))
+        self.meta_test('input/bench11-small/s32-vm50p-map0p-4-111c-small.desc', 7)
 
     def test_bench11_small_5(self):
-        servers, vms = get_problem('input/bench11-small/s32-vm50p-map0p-5-111c-small.desc')
-        assignment   = solve(servers, vms)
-
-        self.assertIsNotNone(assignment)
-        self.assertEqual(5, len(assignment))
+        self.meta_test('input/bench11-small/s32-vm50p-map0p-5-111c-small.desc', 5)
 
     def test_bench11_1(self):
-        servers, vms = get_problem('input/bench11/s32-vm25p-map0p-1-111c.desc')
-        assignment   = solve(servers, vms)
-
-        self.assertIsNotNone(assignment)
-        self.assertEqual(17, len(assignment))
+        self.meta_test('input/bench11/s32-vm25p-map0p-1-111c.desc', 17)
 
     def test_bench11_2(self):
-        servers, vms = get_problem('input/bench11/s32-vm25p-map0p-2-111c.desc')
-        assignment   = solve(servers, vms)
-
-        self.assertIsNotNone(assignment)
-        self.assertEqual(16, len(assignment))
+        self.meta_test('input/bench11/s32-vm25p-map0p-2-111c.desc', 16)
 
     def test_bench11_3(self):
-        servers, vms = get_problem('input/bench11/s32-vm25p-map0p-3-111c.desc')
-        assignment   = solve(servers, vms)
-
-        self.assertIsNotNone(assignment)
-        self.assertEqual(8, len(assignment))
+        self.meta_test('input/bench11/s32-vm25p-map0p-3-111c.desc', 8)
 
     def test_bench11_4(self):
-        servers, vms = get_problem('input/bench11/s32-vm50p-map0p-4-111c.desc')
-        assignment   = solve(servers, vms)
-
-        self.assertIsNotNone(assignment)
-        self.assertEqual(10, len(assignment))
+        self.meta_test('input/bench11/s32-vm50p-map0p-4-111c.desc', 10)
 
     def test_bench11_5(self):
-        servers, vms = get_problem('input/bench11/s32-vm50p-map0p-5-111c.desc')
-        assignment   = solve(servers, vms)
-
-        self.assertIsNotNone(assignment)
-        self.assertEqual(9, len(assignment))
-
-class TestSolveComplex(unittest.TestCase):
-
-    # This plugin is not working... --'
-    # @pytest.mark.timeout(timeout=1, method='thread')
-    # def test_timeout(self):
-    #     for i in range(1000000000000):
-    #         pass
-    #     print('done')
-
-    @pytest.mark.timeout(timeout=30, method='thread')
-    def test_01_in(self):
-        servers, vms = get_problem('input/01.in')
-        assignment   = solve(servers, vms)
-
-        self.assertIsNotNone(assignment)
-        self.assertEqual(2, len(assignment))
-
-    @pytest.mark.timeout(timeout=30, method='thread')
-    def test_02_in(self):
-        servers, vms = get_problem('input/02.in')
-        assignment   = solve(servers, vms)
-
-        self.assertIsNotNone(assignment)
-        self.assertEqual(2, len(assignment))
+        self.meta_test('input/bench11/s32-vm50p-map0p-5-111c.desc', 9)
 
     def test_bench22_small_1(self):
-        servers, vms = get_problem('input/bench22-small/s32-vm25p-map0p-1-222a-small.desc')
-        assignment   = solve(servers, vms)
-
-        self.assertIsNotNone(assignment)
-        self.assertEqual(8, len(assignment))
+        self.meta_test('input/bench22-small/s32-vm25p-map0p-1-222a-small.desc', 8)
 
     def test_bench22_small_2(self):
-        servers, vms = get_problem('input/bench22-small/s32-vm25p-map0p-2-222a-small.desc')
-        assignment   = solve(servers, vms)
-
-        self.assertIsNotNone(assignment)
-        self.assertEqual(6, len(assignment))
+        self.meta_test('input/bench22-small/s32-vm25p-map0p-2-222a-small.desc', 6)
 
     def test_bench22_small_3(self):
-        servers, vms = get_problem('input/bench22-small/s32-vm25p-map0p-3-222a-small.desc')
-        assignment   = solve(servers, vms)
-
-        self.assertIsNotNone(assignment)
-        self.assertEqual(6, len(assignment))
+        self.meta_test('input/bench22-small/s32-vm25p-map0p-3-222a-small.desc', 6)
 
     def test_bench22_small_4(self):
-        servers, vms = get_problem('input/bench22-small/s32-vm50p-map0p-4-222a-small.desc')
-        assignment   = solve(servers, vms)
-
-        self.assertIsNotNone(assignment)
-        self.assertEqual(6, len(assignment))
+        self.meta_test('input/bench22-small/s32-vm50p-map0p-4-222a-small.desc', 6)
 
     def test_bench22_small_5(self):
-        servers, vms = get_problem('input/bench22-small/s32-vm50p-map0p-5-222a-small.desc')
-        assignment   = solve(servers, vms)
-
-        self.assertIsNotNone(assignment)
-        self.assertEqual(5, len(assignment))
+        self.meta_test('input/bench22-small/s32-vm50p-map0p-5-222a-small.desc', 5)
 
     def test_bench22_1(self):
-        servers, vms = get_problem('input/bench22/s32-vm25p-map0p-1-222a.desc')
-        assignment   = solve(servers, vms)
-
-        self.assertIsNotNone(assignment)
-        self.assertEqual(14, len(assignment))
+        self.meta_test('input/bench22/s32-vm25p-map0p-1-222a.desc', 14)
 
     def test_bench22_2(self):
-        servers, vms = get_problem('input/bench22/s32-vm25p-map0p-2-222a.desc')
-        assignment   = solve(servers, vms)
-
-        self.assertIsNotNone(assignment)
-        self.assertEqual(10, len(assignment))
+        self.meta_test('input/bench22/s32-vm25p-map0p-2-222a.desc', 10)
 
     def test_bench22_3(self):
-        servers, vms = get_problem('input/bench22/s32-vm25p-map0p-3-222a.desc')
-        assignment   = solve(servers, vms)
-
-        self.assertIsNotNone(assignment)
-        self.assertEqual(8, len(assignment))
+        self.meta_test('input/bench22/s32-vm25p-map0p-3-222a.desc', 8)
 
     def test_bench22_4(self):
-        servers, vms = get_problem('input/bench22/s32-vm50p-map0p-4-222a.desc')
-        assignment   = solve(servers, vms)
-
-        self.assertIsNotNone(assignment)
-        self.assertEqual(8, len(assignment))
+        self.meta_test('input/bench22/s32-vm50p-map0p-4-222a.desc', 8)
 
     def test_bench22_5(self):
-        servers, vms = get_problem('input/bench22/s32-vm50p-map0p-5-222a.desc')
-        assignment   = solve(servers, vms)
-
-        self.assertIsNotNone(assignment)
-        self.assertEqual(5, len(assignment))
-
-class TestMain(unittest.TestCase):
-    pass
+        self.meta_test('input/bench22/s32-vm50p-map0p-5-222a.desc', 5)
 
 if __name__ == '__main__':
     unittest.main()
