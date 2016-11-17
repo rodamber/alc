@@ -73,7 +73,7 @@ class TestAssignmentFromModel(unittest.TestCase):
 
 class TestSolve(unittest.TestCase):
 
-    @timeout(10 * 60.0)
+    @timeout(30.0)
     def meta_test(self, file, result):
         servers, vms = get_problem(file)
         assignment = solve(servers, vms)
