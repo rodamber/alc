@@ -2,8 +2,25 @@
 # encoding: utf-8
 
 import unittest
+import multiprocessing.pool
+import functools
 
 from alc import *
+
+# Taken from this SO answer: http://stackoverflow.com/a/35139284/3854518
+def timeout(max_timeout):
+    """Timeout decorator, parameter in seconds."""
+    def timeout_decorator(item):
+        """Wrap the original function."""
+        @functools.wraps(item)
+        def func_wrapper(*args, **kwargs):
+            """Closure for function."""
+            pool = multiprocessing.pool.ThreadPool(processes=1)
+            async_result = pool.apply_async(item, args, kwargs)
+            # raises a TimeoutError if execution exceeds max_timeout
+            return async_result.get(max_timeout)
+        return func_wrapper
+    return timeout_decorator
 
 class TestAssignmentFromModel(unittest.TestCase):
     def setUp(self):
@@ -56,6 +73,7 @@ class TestAssignmentFromModel(unittest.TestCase):
 
 class TestSolve(unittest.TestCase):
 
+    @timeout(10 * 60.0)
     def meta_test(self, file, result):
         servers, vms = get_problem(file)
         assignment = solve(servers, vms)
