@@ -3,6 +3,7 @@
 
 from copy import deepcopy
 from itertools import *
+
 import sys
 
 from z3 import *
@@ -124,11 +125,11 @@ def get_problem(file_name):
                                     ram_req, anti_collocation)]
     return servers, vms
 
-def cardinality_constraints(servers, vms, V):
-    return [And(0 <= V[vm], V[vm] < len(servers)) for vm in vms]
+def cardinality_constraints(V, S):
+    return [And(0 <= v, v < len(S)) for v in V.values()]
 
-def anti_collocation_constraints(servers, vms, V):
-    jobs            = [list(g) for _, g in groupby(vms, lambda v: v.job_id)]
+def anti_collocation_constraints(V):
+    jobs            = [list(g) for _, g in groupby(V.keys(), lambda v: v.job_id)]
     ac_matrix       = [[V[vm] for vm in job if vm.anti_collocation] for job in jobs]
 
     constraints     = [Distinct(j) for j in ac_matrix if j]
@@ -136,81 +137,69 @@ def anti_collocation_constraints(servers, vms, V):
 
     return min_num_servers, constraints
 
-def server_capacity_constraints(servers, vms, V, S):
+def server_capacity_constraints(V, S):
     constraints = []
 
-    for s in servers:
-        for vm in vms:
-            constraints += [If(V[vm] == s.id,
-                               S[s](V[vm]) == 1,
-                               S[s](V[vm]) == 0)]
+    for server, s in S.items():
+        for v in V.values():
+            constraints += [If(v == server.id, s(v) == 1, s(v) == 0)]
 
-        cpu_cons = (Sum([S[s](V[vm]) * vm.cpu_req for vm in vms]) <= s.cpu_cap)
-        ram_cons = (Sum([S[s](V[vm]) * vm.ram_req for vm in vms]) <= s.ram_cap)
-        constraints += [cpu_cons, ram_cons]
+        constraints += [Sum([s(v) * vm.cpu_req for vm, v in V.items()]) <= server.cpu_cap,
+                        Sum([s(v) * vm.ram_req for vm, v in V.items()]) <= server.ram_cap]
 
     return constraints
 
-def assign(simple_vms, partial_assignment):
-    if not simple_vms:
-        return partial_assignment
+def cantor_pairing(a, b):
+    return 0.5 * (a + b) * (a + b + 1) + b
 
-    servers_ = [deepcopy(s) for s in partial_assignment]
+def server_symmetry_breaking_constraints(V, S, mode='safe'):
+    key = lambda s: cantor_pairing(s.cpu_cap, s.ram_cap)
 
-    for s in servers_:
-        for vm in partial_assignment[s]:
-            s.cpu_cap -= vm.cpu_req
-            s.ram_cap -= vm.ram_req
+    equals = [list(g) for _, g in groupby(sorted(S.keys(), key=key), key)]
 
-    key = lambda s: min(s.cpu_cap, s.ram_cap)
+    # This is the set of sets of servers that are equal to each other.
+    equals = [x for x in equals if len(x) > 1]
 
-    # Is there enough space?
-    if sum(key(s) for s in servers_) < len(simple_vms):
-        return None
+    jobs      = [list(g) for _, g in groupby(V.keys(), lambda v: v.job_id)]
+    ac_matrix = [[V[vm] for vm in job if vm.anti_collocation] for job in jobs]
 
-    servers_ = sorted(servers_, key =key, reverse =True)
+    # key_vm = lambda vm: cantor_pairing(vm.cpu_req, vm.ram_req)
+    # vm_equals = [list(g) for _, g in groupby(sorted(V.keys(), key=key_vm), key_vm)]
+    # vm_equals_jobs = [[list(g) for _, g in groupby(sorted(vm_eq, 
+    #                                                       key=lambda vm: vm.job_id))] 
+    #                   for vm_eq in vm_equals]
+    # vm_equals = [[vs[0] for vs in vss] for vss in vm_equals_jobs]
 
-    ac_vms = sorted([vm for vm in simple_vms if vm.anti_collocation], 
-                    key=lambda v: v.job_id)
-    ac_matrix = [list(g) for _, g in groupby(ac_vms, lambda v: v.job_id)]
-    ac_vms = [x for job in sorted(ac_matrix, key=len, reverse=True) for x in job]
+    # # This is the set of sets of vms that are equal to each other but belong to
+    # # a different job.
+    # vm_equals = [x for x in vm_equals if len(x) > 1]
+    # v_equals = [[V[vm] for vm in vms] for vms in vm_equals]
 
-    not_ac_vms = [vm for vm in simple_vms if not vm.anti_collocation]
-    vms_       = ac_vms + not_ac_vms 
+    # print(v_equals)
+    # sys.exit('vm_equals')
 
-    full_assignment = {s : partial_assignment[s] for s in servers_}
+    # vm_equals = [x for x in equals if len(x) > 1]
 
-    for vm in vms_:
-        placed = True
+    constraints = []
 
-        for s in full_assignment:
-            if place(vm, s, full_assignment) is not None:
-                break
-        else:
-            placed = False
-
-        if placed == False:
-            return None
-
-    return full_assignment
-
-def place(vm, server, assignment):
-    assert(vm.cpu_req == vm.ram_req == 1)
-
-    if vm in assignment[server]:
-        return None
-    elif server.cpu_cap == 0 or server.ram_cap == 0:
-        return None
-    elif vm.anti_collocation and \
-         [v for v in assignment[server] if v.job_id == vm.job_id and v.anti_collocation]:
-        return None
+    if mode == 'safe':
+        for job in ac_matrix:
+            v = job[0] # 0 is random
+            # v = list(max(v_equals, key=len))[0]
+            for ss in equals:
+                for s in ss[1:]: # 1 is random
+                    constraints.append(v != s.id)
+    elif mode == 'unsafe':
+        for job in ac_matrix:
+            for i, v in enumerate(job):
+                for ss in equals:
+                    for s in ss[:i] + ss[i+1:]:
+                        constraints.append(v != s.id)
     else:
-        assignment[server] += [vm]
-        server.cpu_cap -= 1
-        server.ram_cap -= 1
-        return assignment
+        raise RuntimeError('mode must be either \'safe\' or \'unsafe\'')
+    return constraints
 
-def assignment_from_model(servers, vms, V, model):
+def assignment_from_model(servers, V, model):
     """
     Returns a dictionary of (s, vms_) pairs, where vms_ are the virtual machines
     assigned to server s.
@@ -223,105 +212,55 @@ def assignment_from_model(servers, vms, V, model):
     assignment = {s : assignment_[s.id] for s in servers if assignment_[s.id]}
     return assignment
 
-def basic_solve(servers, vms):
-    jobs            = [list(g) for _, g in groupby(vms, lambda v: v.job_id)]
-    ac_matrix       = [list(filter(lambda vm: vm.anti_collocation, j)) for j in jobs]
-    min_num_servers = max(map(len, ac_matrix))
-
-    servers = sorted(servers, key=lambda s: min(s.cpu_cap, s.ram_cap), reverse=True)
-
-    for num_servers in range(min_num_servers, len(servers) + 1):
-        assignment = assign(vms, {s: [] for s in servers[0:num_servers]})
-
-        if assignment is not None:
-            return assignment
-    return None
-
 def solve(servers, vms):
-    key         = lambda vm: vm.cpu_req != 1 or vm.ram_req != 1
-    complex_vms = list(filter(key, vms))
-
-    if not complex_vms:
-       return basic_solve(servers, vms)
-
-    simple_vms = list(filterfalse(key, vms))
-
+    #---------------------------------------------------------------------------
+    # Constraints
     #---------------------------------------------------------------------------
 
-    V = {vm : Int('VM{}'.format(vm.id)) for vm in complex_vms}
+    V = {vm : Int('vm{}'.format(vm.id)) for vm in vms}
     S = {s : Function('s{}'.format(s.id), IntSort(), IntSort()) for s in servers}
 
-    # FIXME: Do we really need this?
-    f = Function('f', IntSort(), IntSort())
+    formula = []
+    formula += cardinality_constraints(V, S)
+
+    min_num_servers, cs = anti_collocation_constraints(V)
+    formula += cs
+
+    formula += server_capacity_constraints(V, S)
+
+    formula += server_symmetry_breaking_constraints(V, S, mode='safe')
+
+    on = Function('on', IntSort(), IntSort())
+
+    for server, s in S.items():
+        formula.append(If(Sum([s(v) for v in V.values()]) >= 1, 
+                          on(server.id) == 1, on(server.id) == 0))
 
     #---------------------------------------------------------------------------
+    # Search
+    #---------------------------------------------------------------------------
+
+    # Some redundant clauses to make it faster
+    formula.append(Sum([on(s.id) * s.cpu_cap for s in S]) >= sum([v.cpu_req for v in V]))
+    formula.append(Sum([on(s.id) * s.ram_cap for s in S]) >= sum([v.ram_req for v in V]))
 
     solver = Solver()
+    solver.add(formula)
 
-    solver.add(cardinality_constraints(servers, complex_vms, V))
-
-    min_num_servers, constraints = anti_collocation_constraints(servers, complex_vms, V)
-    solver.add(constraints)
-
-    solver.add(server_capacity_constraints(servers, complex_vms, V, S))
-
-    for s in servers:
-        solver.add(If(Sum([S[s](v) for _, v in V.items()]) >= 1,
-                      f(s.id) == 1,
-                      f(s.id) == 0))
-
-    #---------------------------------------------------------------------------
-
-    model = None
-    assignment = None
     for num_servers in range(min_num_servers, len(servers) + 1):
         solver.push()
+        solver.add(Sum([on(s.id) for s in servers]) == num_servers)
 
-        # FIXME: <= or == ?
-        solver.add(Sum([f(s.id) for s in servers]) == num_servers)
-
-        print('num_servers = {}'.format(num_servers))
-        i = 0
-        while solver.check() == sat:
-            i += 1
-            print('i = {}'.format(i))
-
-            # Check if the solution holds when adding the "simple" VMs.
-            model = solver.model()
-            partial_assignment = assignment_from_model(servers, vms, V, model)
-
-            # Is there enough space for the rest of the vms? If not, don't
-            # bother continuing the loop.
-            if not enough_space(simple_vms, partial_assignment):
-                print('Ups. Not enough space (i = {})'.format(i))
-                break
-
-            assignment = assign(simple_vms, partial_assignment)
-
-            if assignment is None:
-                # Doesn't hold, which implies that the problem may be (!) unsat.
-                solver.add(Or([v != model[v] for _, v in V.items()]))
-            else:
-                return assignment
-        print("Finished iteration with |S| = {}".format(num_servers))
-
+        result = solver.check()
+        if result == unknown:
+            raise Z3Exception("failed")
+        elif result == sat:
+            return assignment_from_model(servers, V, solver.model())
         solver.pop()
 
-    # Bug.
+        print("Finished iteration with number of servers = {}".format(num_servers))
+
     return None
-
-def enough_space(vms, partial_assignment):
-    servers_ = [deepcopy(s) for s in partial_assignment]
-
-    for s in servers_:
-        for vm in partial_assignment[s]:
-            s.cpu_cap -= vm.cpu_req
-            s.ram_cap -= vm.ram_req
-
-    key = lambda s: min(s.cpu_cap, s.ram_cap)
-    return sum(key(s) for s in servers_) < len(vms)
-
-
 
 def main(file_name=''):
     if (file_name == ''):
