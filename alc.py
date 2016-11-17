@@ -158,7 +158,86 @@ def assignment_from_model(servers, V, model):
     assignment = {s : assignment_[s.id] for s in servers if assignment_[s.id]}
     return assignment
 
+def place(vm, server, assignment):
+    assert(vm.cpu_req == vm.ram_req == 1)
+
+    if vm in assignment[server]:
+        return None
+    elif server.cpu_cap == 0 or server.ram_cap == 0:
+        return None
+    elif vm.anti_collocation and \
+         [v for v in assignment[server] if v.job_id == vm.job_id and v.anti_collocation]:
+        return None
+    else:
+        assignment[server] += [vm]
+        server.cpu_cap -= 1
+        server.ram_cap -= 1
+        return assignment
+
+def assign(simple_vms, partial_assignment):
+    if not simple_vms:
+        return partial_assignment
+
+    servers_ = [deepcopy(s) for s in partial_assignment]
+
+    for s in servers_:
+        for vm in partial_assignment[s]:
+            s.cpu_cap -= vm.cpu_req
+            s.ram_cap -= vm.ram_req
+
+    key = lambda s: min(s.cpu_cap, s.ram_cap)
+
+    # Is there enough space?
+    if sum(key(s) for s in servers_) < len(simple_vms):
+        return None
+
+    servers_ = sorted(servers_, key =key, reverse =True)
+
+    ac_vms = sorted([vm for vm in simple_vms if vm.anti_collocation],
+                    key=lambda v: v.job_id)
+    ac_matrix = [list(g) for _, g in groupby(ac_vms, lambda v: v.job_id)]
+    ac_vms = [x for job in sorted(ac_matrix, key=len, reverse=True) for x in job]
+
+    not_ac_vms = [vm for vm in simple_vms if not vm.anti_collocation]
+    vms_       = ac_vms + not_ac_vms
+
+    full_assignment = {s : partial_assignment[s] for s in servers_}
+
+    for vm in vms_:
+        placed = True
+
+        for s in full_assignment:
+            if place(vm, s, full_assignment) is not None:
+                break
+        else:
+            placed = False
+
+        if placed == False:
+            return None
+
+    return full_assignment
+
+def complex_vms(vms):
+    return [vm for vm in vms if vm.cpu_req != 1 or vm.ram_req != 1]
+
+def basic_solve(servers, vms):
+    jobs            = [list(g) for _, g in groupby(vms, lambda v: v.job_id)]
+    ac_matrix       = [list(filter(lambda vm: vm.anti_collocation, j)) for j in jobs]
+    min_num_servers = max(map(len, ac_matrix))
+
+    servers = sorted(servers, key=lambda s: min(s.cpu_cap, s.ram_cap), reverse=True)
+
+    for num_servers in range(min_num_servers, len(servers) + 1):
+        assignment = assign(vms, {s: [] for s in servers[0:num_servers]})
+
+        if assignment is not None:
+            return assignment
+    return None
+
 def solve(servers, vms):
+    if not complex_vms(vms):
+        return basic_solve(servers, vms)
+
     V = {vm : Int('vm{}'.format(vm.id)) for vm in vms}
     S = {s : Function('s{}'.format(s.id), IntSort(), IntSort()) for s in servers}
 
