@@ -23,7 +23,9 @@ array[VMs] of var int: assignment;
 array[Servers] of var bool: on;
 
 % on[i] is true if server i is on and false otherwise.
-constraint forall (vid in VMs) (on[assignment[vid]] == true);
+% constraint forall (vid in VMs) (on[assignment[vid]] == true);
+constraint forall (sid in Servers)
+  (on[sid] = exists (vid in VMs) (assignment[vid] == sid));
 
 % Each VM is assigned to exactly one server.
 constraint forall (vid in VMs) (assignment[vid] in Servers);
@@ -45,7 +47,14 @@ constraint sum (sid in Servers) (bool2int(on[sid]) * servers[sid, scpu]) >=
            sum (vid in VMs) (vms[vid, vcpu]);
 constraint sum (sid in Servers) (bool2int(on[sid]) * servers[sid, sram]) >= 
            sum (vid in VMs) (vms[vid, vram]);
+
+% Heuristic (not optimal!)
+% If a server is on then all the servers with more ram must be on too.
+constraint forall (sid1 in Servers where on[sid1])
+  (forall (sid2 in Servers where servers[sid1, sram] < servers[sid2, sram])
+    (on[sid2]));
       
+
 solve minimize (sum (sid in Servers) (bool2int(on[sid])));
 
 output["o " ++ show(sum (s in Servers) (bool2int(on[s]))) ++ "\n"] ++
