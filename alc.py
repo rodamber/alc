@@ -141,7 +141,7 @@ def problem2dzn(problem):
 
 def main(file_name=''):
     if (file_name == ''):
-        print("USAGE: proj2 <scenario-file-name>")
+        print("USAGE: proj3 <scenario-file-name>")
         return
 
     data = problem2dzn(get_problem(file_name))
