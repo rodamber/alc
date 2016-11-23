@@ -47,10 +47,10 @@ constraint
       ((vms[vid2, vac] == 1) -> assignment[vid1] != assignment[vid2]));
 
 % Redundant constraints.
-constraint sum (s in Servers) (bool2int(on[s]) * servers[s, scpu]) >=
-           sum (vid in VMs) (vms[vid, vcpu]);
-constraint sum (s in Servers) (bool2int(on[s]) * servers[s, sram]) >=
-           sum (vid in VMs) (vms[vid, vram]);
+constraint sum (s in Servers where on[s]) 
+               (servers[s, scpu]) >= sum (vid in VMs) (vms[vid, vcpu]);
+constraint sum (s in Servers where on[s]) 
+               (servers[s, sram]) >= sum (vid in VMs) (vms[vid, vram]);
 
 % ------------------------------------------------------------------------------
 
@@ -60,24 +60,18 @@ constraint sum (s in Servers) (bool2int(on[s]) * servers[s, sram]) >=
 %   (forall (s2 in Servers where servers[s1, sram] < servers[s2, sram])
 %     (on[s2]));
 
-% var int: maxid;
-% constraint maxid in Servers /\ servers[maxid, sram] == max (s in Servers) (servers[s, sram]);
-% constraint on[maxid];
-
 % solve minimize (sum (s in Servers) (bool2int(on[s])));
 % solve :: bool_search(on, input_order, outdomain_max, complete)
       % minimize (sum (s in Servers) (bool2int(on[s])));
 
 % ------------------------------------------------------------------------------
 
-% FIXME
-constraint forall (s in 1..{num_servers}) (on[s]);
-
+{heuristic}
 constraint (sum (s in Servers) (bool2int(on[s]))) == {num_servers};
 
 solve satisfy;
 
-output["o " ++ show(sum (s in Servers) (bool2int(on[s]))) ++ "\n"] ++
+output["o " ++ show({num_servers}) ++ "\n"] ++
       [show(vms[vid, vjob]) ++ " " ++ show(vms[vid, vindex]) ++ " -> "++
        show(sid[assignment[vid]]) ++ "\n" | vid in VMs];
 
