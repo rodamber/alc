@@ -120,6 +120,34 @@ def get_problem(file_name):
     return servers, vms
 
 def problem2dzn(problem):
+
+    def sid2dzn(servers):
+        lid = [s.id for s in servers]
+
+        sid = 'sid = ['
+        for ix in lid:
+            sid += '{}, '.format(ix)
+        sid += '];'
+
+        return sid
+
+    def server_to_list(srv):
+        return [srv.cpu_cap, srv.ram_cap]
+
+    def vm_to_list(vm):
+        return [vm.job_id, vm.vm_index, vm.cpu_req, vm.ram_req, int(vm.anti_collocation)]
+
+    def dzn_array2d(lst, padding=''):
+        res = '['
+        for i, row in enumerate(lst):
+            res += ('' if i == 0 else padding) + '| '
+            for col in row:
+                res += '{}, '.format(col)
+            res += '\n'
+        res += padding + '|];'
+
+        return res
+
     servers, vms = problem
     lines = []
 
@@ -138,36 +166,31 @@ def problem2dzn(problem):
 
     return "\n".join(lines)
 
-def sid2dzn(servers):
-    lid = [s.id for s in servers]
-
-    sid = 'sid = ['
-    for ix in lid:
-        sid += '{}, '.format(ix)
-    sid += '];'
-
-    return sid
-
-def server_to_list(srv):
-    return [srv.cpu_cap, srv.ram_cap]
-
-def vm_to_list(vm):
-    return [vm.job_id, vm.vm_index, vm.cpu_req, vm.ram_req, int(vm.anti_collocation)]
-
-def dzn_array2d(lst, padding=''):
-    res = '['
-    for i, row in enumerate(lst):
-        res += ('' if i == 0 else padding) + '| '
-        for col in row:
-            res += '{}, '.format(col)
-        res += '\n'
-    res += padding + '|];'
-
-    return res
-
-def main(file_name=''):
+def solve(csp_model, data):
     import stdchannel
 
+    tf = tempfile.NamedTemporaryFile(mode='w', suffix='.mzn', delete=False)
+    tf.write(csp_model)
+    csp_model_file_name = tf.name
+    tf.close()
+
+    cmd = "./MiniZinc/minizinc --solution-separator \"\" --search-complete-msg \"\" " + \
+        "{model} -D \"{dzn}\"".format(model=csp_model_file_name, dzn=data)
+
+
+    with stdchannel.redirect(sys.stderr, os.devnull):
+        output = subprocess.check_output(cmd, shell=True)
+        if output != b'=====UNSATISFIABLE=====\n': # sat
+            return True, output.decode('utf-8')[:-2]
+        else:
+            return False, output.decode('utf-8')
+
+    try:
+        os.remove(csp_model_file_name)
+    except OSError:
+        sys.exit('{} does not exist!'.format(csp_model_file_name))
+
+def main(file_name=''):
     if (file_name == ''):
         print("USAGE: proj3 <scenario-file-name>")
         return
@@ -186,30 +209,11 @@ def main(file_name=''):
     for num_servers in range(min_num_servers, len(servers) + 1):
         csp_model = template.format(num_servers=num_servers)
 
-        tf = tempfile.NamedTemporaryFile(mode='w', suffix='.mzn', delete=False)
-        tf.write(csp_model)
-        csp_model_file_name = tf.name
-        tf.close()
+        sat, output = solve(csp_model, data)
 
-        cmd = "./MiniZinc/minizinc --solution-separator \"\" --search-complete-msg \"\" " + \
-            "{model} -D \"{dzn}\"".format(model=csp_model_file_name, dzn=data)
-
-        # print(csp_model)
-        # print(data)
-
-        with stdchannel.redirect(sys.stderr, os.devnull):
-            output = subprocess.check_output(cmd, shell=True)
-            if output != b'=====UNSATISFIABLE=====\n': # sat
-                sat = True
-                # Print the output minus the extra two newlines
-                print(output.decode('utf-8')[:-2])
-
-        try:
-            os.remove(csp_model_file_name)
-        except OSError:
-            sys.exit('{} does not exist!'.format(csp_model_file_name))
-
-        if sat: break
+        if sat:
+            print(output)
+            break
 
 
 if __name__ == "__main__":
