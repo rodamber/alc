@@ -150,6 +150,8 @@ def dzn_array2d(lst, padding=''):
     return res
 
 def main(file_name=''):
+    import stdchannel
+
     if (file_name == ''):
         print("USAGE: proj3 <scenario-file-name>")
         return
@@ -159,7 +161,8 @@ def main(file_name=''):
           "proj.mzn -D \"" + data + "\""
 
     print(data)
-    os.system(cmd)
+    with stdchannel.redirect(sys.stderr, os.devnull):
+        os.system(cmd)
 
 if __name__ == "__main__":
     main(get_file_name())

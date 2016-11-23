@@ -1,10 +1,2 @@
 #!/usr/bin/env bash
-
-# Suppress stderr
-exec 3>&2
-exec 2> /dev/null
-
 ./alc.py $1
-
-# Recover stderr
-exec 2>&3
