@@ -2,7 +2,9 @@
 # encoding: utf-8
 
 import os
+import subprocess
 import sys
+import tempfile
 
 class hardware:
     CPU = "CPU"
@@ -124,8 +126,8 @@ def problem2dzn(problem):
     lines.append("nServers = {};".format(len(servers)))
     lines.append("nVMs = {};".format(len(vms)))
 
-    # ss = sorted(servers, key=lambda s: s.ram_cap, reverse=True)
-    ss = servers
+    ss = sorted(servers, key=lambda s: s.ram_cap, reverse=True)
+    # ss = servers
 
     servers_list = [server_to_list(srv) for srv in ss]
     vms_list = [vm_to_list(vm) for vm in vms]
@@ -170,15 +172,45 @@ def main(file_name=''):
         print("USAGE: proj3 <scenario-file-name>")
         return
 
-    data = problem2dzn(get_problem(file_name))
-    cmd = "./MiniZinc/minizinc --solution-separator \"\" --search-complete-msg \"\" " + \
-          "proj.mzn -D \"" + data + "\""
+    f = open("csp_model.mzn.template")
+    template = f.read()
+    f.close()
 
-    print(data)
+    servers, vms = get_problem(file_name)
+    data = problem2dzn((servers, vms))
 
-    # os.system(cmd)
-    with stdchannel.redirect(sys.stderr, os.devnull):
-        os.system(cmd)
+    # FIXME
+    min_num_servers = 2
+    sat = False
+
+    for num_servers in range(min_num_servers, len(servers) + 1):
+        csp_model = template.format(num_servers=num_servers)
+
+        tf = tempfile.NamedTemporaryFile(mode='w', suffix='.mzn', delete=False)
+        tf.write(csp_model)
+        csp_model_file_name = tf.name
+        tf.close()
+
+        cmd = "./MiniZinc/minizinc --solution-separator \"\" --search-complete-msg \"\" " + \
+            "{model} -D \"{dzn}\"".format(model=csp_model_file_name, dzn=data)
+
+        # print(csp_model)
+        # print(data)
+
+        with stdchannel.redirect(sys.stderr, os.devnull):
+            output = subprocess.check_output(cmd, shell=True)
+            if output != b'=====UNSATISFIABLE=====\n': # sat
+                sat = True
+                # Print the output minus the extra two newlines
+                print(output.decode('utf-8')[:-2])
+
+        try:
+            os.remove(csp_model_file_name)
+        except OSError:
+            sys.exit('{} does not exist!'.format(csp_model_file_name))
+
+        if sat: break
+
 
 if __name__ == "__main__":
     main(get_file_name())

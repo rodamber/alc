@@ -70,7 +70,7 @@ constraint sum (s in Servers) (bool2int(on[s]) * servers[s, sram]) >=
 
 % ------------------------------------------------------------------------------
 
-$num_servers_constraint
+constraint (sum (s in Servers) (bool2int(on[s]))) == {num_servers};
 
 solve satisfy;
 
