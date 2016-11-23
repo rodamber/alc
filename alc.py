@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # encoding: utf-8
 
+from itertools import *
 import os
 import subprocess
 import sys
@@ -177,6 +178,8 @@ def solve(csp_model, data):
     cmd = "./MiniZinc/minizinc --solution-separator \"\" --search-complete-msg \"\" " + \
         "{model} -D \"{dzn}\"".format(model=csp_model_file_name, dzn=data)
 
+    # print(csp_model)
+
 
     with stdchannel.redirect(sys.stderr, os.devnull):
         output = subprocess.check_output(cmd, shell=True)
@@ -190,6 +193,13 @@ def solve(csp_model, data):
     except OSError:
         sys.exit('{} does not exist!'.format(csp_model_file_name))
 
+def min_num_servers(vms):
+    jobs            = [list(g) for _, g in groupby(vms, lambda v: v.job_id)]
+    ac_matrix       = [[vm for vm in job if vm.anti_collocation] for job in jobs]
+    min_num_servers = max([len(j) for j in ac_matrix])
+
+    return min_num_servers
+
 def main(file_name=''):
     if (file_name == ''):
         print("USAGE: proj3 <scenario-file-name>")
@@ -202,11 +212,9 @@ def main(file_name=''):
     servers, vms = get_problem(file_name)
     data = problem2dzn((servers, vms))
 
-    # FIXME
-    min_num_servers = 2
+    # Search
     sat = False
-
-    for num_servers in range(min_num_servers, len(servers) + 1):
+    for num_servers in range(min_num_servers(vms), len(servers) + 1):
         csp_model = template.format(num_servers=num_servers)
 
         sat, output = solve(csp_model, data)

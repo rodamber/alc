@@ -70,6 +70,9 @@ constraint sum (s in Servers) (bool2int(on[s]) * servers[s, sram]) >=
 
 % ------------------------------------------------------------------------------
 
+% FIXME
+constraint forall (s in 1..{num_servers}) (on[s]);
+
 constraint (sum (s in Servers) (bool2int(on[s]))) == {num_servers};
 
 solve satisfy;
