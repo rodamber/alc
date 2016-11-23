@@ -124,13 +124,27 @@ def problem2dzn(problem):
     lines.append("nServers = {};".format(len(servers)))
     lines.append("nVMs = {};".format(len(vms)))
 
-    servers_list = [server_to_list(srv) for srv in servers]
+    # ss = sorted(servers, key=lambda s: s.ram_cap, reverse=True)
+    ss = servers
+
+    servers_list = [server_to_list(srv) for srv in ss]
     vms_list = [vm_to_list(vm) for vm in vms]
 
+    lines.append(sid2dzn(ss))
     lines.append('servers = ' + dzn_array2d(servers_list, padding='           '))
     lines.append('vms = ' + dzn_array2d(vms_list, padding='       '))
 
     return "\n".join(lines)
+
+def sid2dzn(servers):
+    lid = [s.id for s in servers]
+
+    sid = 'sid = ['
+    for ix in lid:
+        sid += '{}, '.format(ix)
+    sid += '];'
+
+    return sid
 
 def server_to_list(srv):
     return [srv.cpu_cap, srv.ram_cap]
@@ -161,6 +175,8 @@ def main(file_name=''):
           "proj.mzn -D \"" + data + "\""
 
     print(data)
+
+    # os.system(cmd)
     with stdchannel.redirect(sys.stderr, os.devnull):
         os.system(cmd)
 
