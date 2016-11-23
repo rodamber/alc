@@ -122,22 +122,32 @@ def problem2dzn(problem):
     lines = []
 
     lines.append("nServers = {};".format(len(servers)))
-    lines.append("servers = [| {}, {},".format(servers[0].cpu_cap,
-                                               servers[0].ram_cap))
-    for s in servers[1:]:
-        lines.append("| {}, {},".format(s.cpu_cap, s.ram_cap))
-    lines.append("|];")
-
     lines.append("nVMs = {};".format(len(vms)))
-    lines.append("vms = [| {}, {}, {}, {}, {},".format(
-        vms[0].job_id, vms[0].vm_index, vms[0].cpu_req, vms[0].ram_req,
-        int(vms[0].anti_collocation)))
-    for v in vms[1:]:
-        lines.append("| {}, {}, {}, {}, {},".format(
-            v.job_id, v.vm_index, v.cpu_req, v.ram_req, int(v.anti_collocation)))
-    lines.append("|];")
+
+    servers_list = [server_to_list(srv) for srv in servers]
+    vms_list = [vm_to_list(vm) for vm in vms]
+
+    lines.append('servers = ' + dzn_array2d(servers_list, padding='           '))
+    lines.append('vms = ' + dzn_array2d(vms_list, padding='       '))
 
     return "\n".join(lines)
+
+def server_to_list(srv):
+    return [srv.cpu_cap, srv.ram_cap]
+
+def vm_to_list(vm):
+    return [vm.job_id, vm.vm_index, vm.cpu_req, vm.ram_req, int(vm.anti_collocation)]
+
+def dzn_array2d(lst, padding=''):
+    res = '['
+    for i, row in enumerate(lst):
+        res += ('' if i == 0 else padding) + '| '
+        for col in row:
+            res += '{}, '.format(col)
+        res += '\n'
+    res += padding + '|];'
+
+    return res
 
 def main(file_name=''):
     if (file_name == ''):
@@ -148,6 +158,7 @@ def main(file_name=''):
     cmd = "./MiniZinc/minizinc --solution-separator \"\" --search-complete-msg \"\" " + \
           "proj.mzn -D \"" + data + "\""
 
+    print(data)
     os.system(cmd)
 
 if __name__ == "__main__":
