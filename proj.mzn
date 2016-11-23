@@ -52,6 +52,8 @@ constraint sum (s in Servers) (bool2int(on[s]) * servers[s, scpu]) >=
 constraint sum (s in Servers) (bool2int(on[s]) * servers[s, sram]) >=
            sum (vid in VMs) (vms[vid, vram]);
 
+% ------------------------------------------------------------------------------
+
 % % Heuristic (not optimal!)
 % % If a server is on then all the servers with more ram must be on too.
 % constraint forall (s1 in Servers where on[s1])
@@ -62,11 +64,18 @@ constraint sum (s in Servers) (bool2int(on[s]) * servers[s, sram]) >=
 % constraint maxid in Servers /\ servers[maxid, sram] == max (s in Servers) (servers[s, sram]);
 % constraint on[maxid];
 
-
-solve minimize (sum (s in Servers) (bool2int(on[s])));
+% solve minimize (sum (s in Servers) (bool2int(on[s])));
 % solve :: bool_search(on, input_order, outdomain_max, complete)
       % minimize (sum (s in Servers) (bool2int(on[s])));
+
+% ------------------------------------------------------------------------------
+
+$num_servers_constraint
+
+solve satisfy;
 
 output["o " ++ show(sum (s in Servers) (bool2int(on[s]))) ++ "\n"] ++
       [show(vms[vid, vjob]) ++ " " ++ show(vms[vid, vindex]) ++ " -> "++
        show(sid[assignment[vid]]) ++ "\n" | vid in VMs];
+
+% ------------------------------------------------------------------------------
