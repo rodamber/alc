@@ -1,0 +1,32 @@
+#!/usr/bin/env python3
+# encoding: utf-8
+
+from alc import *
+
+def list2array1d(name, xs):
+    return name + ' = [' + ', '.join([str(x) for x in xs]) + '];'
+
+def servers2dzn(servers):
+    num_servers = 'num_servers = {};'.format(len(servers))
+    sid  = list2array1d('sid',  [s.id      for s in servers])
+    scpu = list2array1d('scpu', [s.cpu_cap for s in servers])
+    sram = list2array1d('sram', [s.ram_cap for s in servers])
+    return '\n'.join([num_servers, sid, scpu, sram])
+
+def vms2dzn(vms):
+    num_vms = 'num_vms = {};'.format(len(vms))
+    vjob   = list2array1d('vjob',   [vm.job_id                for vm in vms])
+    vindex = list2array1d('vindex', [vm.vm_index              for vm in vms])
+    vcpu   = list2array1d('vcpu',   [vm.cpu_req               for vm in vms])
+    vram   = list2array1d('vram',   [vm.ram_req               for vm in vms])
+    vac    = list2array1d('vac',    [int(vm.anti_collocation) for vm in vms])
+    return '\n'.join([num_vms, vjob, vindex, vcpu, vram, vac])
+
+def problem2dzn(problem):
+    servers, vms = problem
+    return '\n\n'.join([servers2dzn(servers), vms2dzn(vms)])
+
+if __name__ == "__main__":
+    servers, vms = get_problem('input/01.in')
+    ss = sorted(servers, key=lambda s: s.ram_cap, reverse=True)
+    print(problem2dzn((ss, vms)))
