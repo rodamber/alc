@@ -21,7 +21,7 @@ int: scpu = 1; % cpu_cap
 int: sram = 2; % ram_cap
 
 % assignment[i] is the set of ids of the VMs assigned to server i.
-array[VMs] of var int: assignment;
+array[VMs] of var Servers: assignment;
 
 % on[i] is true if server i is on and false otherwise.
 array[Servers] of var bool: on;
@@ -30,9 +30,6 @@ array[Servers] of var bool: on;
 % constraint forall (vid in VMs) (on[assignment[vid]] == true);
 constraint forall (s in Servers)
   (on[s] = exists (vid in VMs) (assignment[vid] == s));
-
-% Each VM is assigned to exactly one server.
-constraint forall (vid in VMs) (assignment[vid] in Servers);
 
 % Servers capacities cannot be exceeded.
 constraint forall (s in Servers)
@@ -54,24 +51,11 @@ constraint sum (s in Servers where on[s])
 
 % ------------------------------------------------------------------------------
 
-% % Heuristic (not optimal!)
-% % If a server is on then all the servers with more ram must be on too.
-% constraint forall (s1 in Servers where on[s1])
-%   (forall (s2 in Servers where servers[s1, sram] < servers[s2, sram])
-%     (on[s2]));
-
-% solve minimize (sum (s in Servers) (bool2int(on[s])));
-% solve :: bool_search(on, input_order, outdomain_max, complete)
-      % minimize (sum (s in Servers) (bool2int(on[s])));
-
-% ------------------------------------------------------------------------------
-
-{heuristic}
-constraint (sum (s in Servers) (bool2int(on[s]))) == {num_servers};
+constraint (sum (s in Servers) (bool2int(on[s]))) == nServers;
 
 solve satisfy;
 
-output["o " ++ show({num_servers}) ++ "\n"] ++
+output["o " ++ show(nServers) ++ "\n"] ++
       [show(vms[vid, vjob]) ++ " " ++ show(vms[vid, vindex]) ++ " -> "++
        show(sid[assignment[vid]]) ++ "\n" | vid in VMs];
 
