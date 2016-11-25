@@ -15,11 +15,12 @@ def servers2dzn(servers):
 
 def vms2dzn(vms):
     num_vms = 'num_vms = {};'.format(len(vms))
-    vjob   = list2array1d('vjob',   [vm.job_id                for vm in vms])
-    vindex = list2array1d('vindex', [vm.vm_index              for vm in vms])
-    vcpu   = list2array1d('vcpu',   [vm.cpu_req               for vm in vms])
-    vram   = list2array1d('vram',   [vm.ram_req               for vm in vms])
-    vac    = list2array1d('vac',    [int(vm.anti_collocation) for vm in vms])
+    vjob   = list2array1d('vjob',   [vm.job_id   for vm in vms])
+    vindex = list2array1d('vindex', [vm.vm_index for vm in vms])
+    vcpu   = list2array1d('vcpu',   [vm.cpu_req  for vm in vms])
+    vram   = list2array1d('vram',   [vm.ram_req  for vm in vms])
+    vac    = list2array1d('vac',    ['true' if vm.anti_collocation else 'false' 
+                                                 for vm in vms])
     return '\n'.join([num_vms, vjob, vindex, vcpu, vram, vac])
 
 def problem2dzn(problem):
@@ -27,6 +28,4 @@ def problem2dzn(problem):
     return '\n\n'.join([servers2dzn(servers), vms2dzn(vms)])
 
 if __name__ == "__main__":
-    servers, vms = get_problem('input/01.in')
-    ss = sorted(servers, key=lambda s: s.ram_cap, reverse=True)
-    print(problem2dzn((ss, vms)))
+    print(problem2dzn(get_problem(get_file_name())))
