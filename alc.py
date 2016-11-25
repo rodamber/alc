@@ -7,6 +7,8 @@ import subprocess
 import sys
 import tempfile
 
+from dzn import *
+
 class hardware:
     CPU = "CPU"
     RAM = "RAM"
@@ -120,81 +122,14 @@ def get_problem(file_name):
                                     ram_req, anti_collocation)]
     return servers, vms
 
-def problem2dzn(problem, heuristic=''):
+def minizinc_cmd(model_file_name, data):
+    executable = './MiniZinc/minizinc'
+    solution_sep = '--solution-separator ""'
+    search_complete_msg = '--search-complete-msg ""'
+    unsat_msg = '--unsat-msg "unsat"'
 
-    def sid2dzn(servers):
-        lid = [s.id for s in servers]
-
-        sid = 'sid = ['
-        for ix in lid:
-            sid += '{}, '.format(ix)
-        sid += '];'
-
-        return sid
-
-    def server_to_list(srv):
-        return [srv.cpu_cap, srv.ram_cap]
-
-    def vm_to_list(vm):
-        return [vm.job_id, vm.vm_index, vm.cpu_req, vm.ram_req, int(vm.anti_collocation)]
-
-    def dzn_array2d(lst, padding=''):
-        res = '['
-        for i, row in enumerate(lst):
-            res += ('' if i == 0 else padding) + '| '
-            for col in row:
-                res += '{}, '.format(col)
-            res += '\n'
-        res += padding + '|];'
-
-        return res
-
-    servers, vms = problem
-    lines = []
-
-    lines.append("nServers = {};".format(len(servers)))
-    lines.append("nVMs = {};".format(len(vms)))
-
-    ss = None
-    if heuristic == '':
-        ss = servers
-    elif heuristic == 'cpu':
-        ss = sorted(servers, key=lambda s: s.cpu_cap, reverse=True)
-    elif heuristic == 'ram':
-        ss = sorted(servers, key=lambda s: s.ram_cap, reverse=True)
-    else:
-        raise ValueError('heuristic must be empty, cpu or ram')
-
-
-    servers_list = [server_to_list(srv) for srv in ss]
-    vms_list = [vm_to_list(vm) for vm in vms]
-
-    lines.append(sid2dzn(ss))
-    lines.append('servers = ' + dzn_array2d(servers_list, padding='           '))
-    lines.append('vms = ' + dzn_array2d(vms_list, padding='       '))
-
-    return "\n".join(lines)
-
-def solve(csp_model, data):
-    import stdchannel
-
-    tf = tempfile.NamedTemporaryFile(mode='w', suffix='.mzn', delete=False)
-    tf.write(csp_model)
-    csp_model_file_name = tf.name
-    tf.close()
-
-    cmd = "./MiniZinc/minizinc --solution-separator \"\" --search-complete-msg \"\" " + \
-        "{model} -D \"{dzn}\"".format(model=csp_model_file_name, dzn=data)
-
-    with stdchannel.redirect(sys.stderr, os.devnull):
-        output = subprocess.check_output(cmd, shell=True)
-        os.remove(csp_model_file_name)
-
-        if output != b'=====UNSATISFIABLE=====\n': # sat
-            return True, output.decode('utf-8')[:-2]
-        else:
-            return False, output.decode('utf-8')
-
+    return ' '.join([executable, solution_sep, search_complete_msg, unsat_msg,
+                     model_file_name, '-D "{}"'.format(data)])
 
 def min_num_servers(vms):
     jobs            = [list(g) for _, g in groupby(vms, lambda v: v.job_id)]
@@ -203,52 +138,57 @@ def min_num_servers(vms):
 
     return min_num_servers
 
+def solve(csp, data):
+    import stdchannel
+
+    cmd = minizinc_cmd(csp, data)
+    with stdchannel.redirect(sys.stderr, os.devnull):
+        output = subprocess.check_output(cmd, shell=True).decode('utf-8')
+
+        # print('output={}'.format(output))
+        if output[:5] != 'unsat': # sat
+            return True, output[:-2]
+        else:
+            return False, output
+
+def satisfy(problem):
+    data = problem2dzn(problem)
+    return solve('satisfy.mzn', data)
+
+def minimize(problem):
+    data = problem2dzn(problem)
+    return solve('minimize.mzn', data)
+
 def main(file_name=''):
     if (file_name == ''):
         print("USAGE: proj3 <scenario-file-name>")
         return
 
-    f = open("csp_model.mzn.template")
-    template = f.read()
-    f.close()
-
-    myheuristic = 'ram'
     servers, vms = get_problem(file_name)
-    data = problem2dzn((servers, vms), heuristic=myheuristic)
 
     # Search
     sat = False
     for num_servers in range(min_num_servers(vms), len(servers) + 1):
-        csp_model = template
+        ss = sorted(servers, key=lambda s: s.ram_cap, reverse=True)[:num_servers]
 
-        if myheuristic == '':
-            csp_model = template.format(heuristic='', num_servers=num_servers)
-        elif myheuristic in ['cpu', 'ram']:
-            constraint = 'constraint forall (s in 1..{}) (on[s] == true);'.format(num_servers)
-            csp_model = template.format(heuristic=constraint, num_servers=num_servers)
-        else:
-            raise ValueError("c'mon, give me a good heuristic")
+        print('num_servers={}'.format(num_servers))
 
         print('--------------0--------------')
-        print('num_servers={}'.format(num_servers))
-        print('servers={}'.format([s.id for s in sorted(servers, key=lambda s: s.ram_cap, reverse=True)][:num_servers]))
+        print('servers={}'.format([s.id for s in ss]))
 
-        sat, output = solve(csp_model, data)
-
+        sat, output = satisfy((ss, vms))
         if sat:
             print(output)
+            print('=== Good call!')
             break
 
-        print('--------------1--------------')
-
-        csp_model = template.format(heuristic='', num_servers=num_servers)
-        sat, output = solve(csp_model, data)
-
-        if sat:
-            print(output)
-            break
-
-
+        # print('--------------1--------------')
+        # # Wrong, because this will try with all the possible servers,
+        # # disregarding num_servers
+        # sat, output = minimize((servers, vms))
+        # if sat:
+        #     print(output)
+        #     break
 
 
 if __name__ == "__main__":

@@ -35,13 +35,6 @@ array[servers] of var int: ram_load;
 % Constraints
 % ------------------------------------------------------------------------------
 
-predicate on(servers: s) = (cpu_load[s] != 0);
-
-var servers: on_count = sum (s in servers) (bool2int(on(s)));
-
-% constraint on_count >= 7;
-% constraint on_count = 20;
-
 constraint forall (s in servers) (cpu_load[s] = sum (v in vms where place[v] = s) (vcpu[v]));
 constraint forall (s in servers) (ram_load[s] = sum (v in vms where place[v] = s) (vram[v]));
 
@@ -58,17 +51,18 @@ constraint forall (v1 in vms where vac[v1])
 constraint sum (v in vms) (vcpu[v]) = sum (s in servers) (cpu_load[s]);
 constraint sum (v in vms) (vram[v]) = sum (s in servers) (ram_load[s]);
 
-constraint sum (s in servers where on(s)) (scpu[s]) >= sum (v in vms) (vcpu[v]);
-constraint sum (s in servers where on(s)) (sram[s]) >= sum (v in vms) (vram[v]);
+constraint sum (s in servers) (scpu[s]) >= sum (v in vms) (vcpu[v]);
+constraint sum (s in servers) (sram[s]) >= sum (v in vms) (vram[v]);
+
+constraint forall (v in vms) (forall (s in servers) (vcpu[v] > scpu[s] -> place[v] != s));
+constraint forall (v in vms) (forall (s in servers) (vram[v] > sram[s] -> place[v] != s));
 
 % ------------------------------------------------------------------------------
 % Solve 
 % ------------------------------------------------------------------------------
 
-solve :: int_search([on_count], first_fail, indomain_min, complete)
-      minimize on_count;
-% solve satisfy;
+solve satisfy;
 
-output["o " ++ show(on_count) ++ "\n"] ++
+output["o " ++ show(num_servers) ++ "\n"] ++
       [show(vjob[v]) ++ " " ++ show(vindex[v]) ++ " -> "++
        show(sid[place[v]]) ++ "\n" | v in vms];
