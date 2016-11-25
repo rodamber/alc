@@ -6,6 +6,6 @@ include "constraints.mzn";
 
 solve satisfy;
 
-output["o " ++ show(num_servers) ++ "\n"] ++
+output["o " ++ show(on_count) ++ "\n"] ++
       [show(vjob[v]) ++ " " ++ show(vindex[v]) ++ " -> "++
        show(sid[place[v]]) ++ "\n" | v in vms];

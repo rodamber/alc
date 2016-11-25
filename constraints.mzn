@@ -4,6 +4,8 @@ include "variables.mzn";
 % Constraints
 % ------------------------------------------------------------------------------
 
+constraint on_count = sum (s in servers) (on(s));
+
 constraint forall (s in servers) (cpu_load[s] = sum (v in vms where place[v] = s) (vcpu[v]));
 constraint forall (s in servers) (ram_load[s] = sum (v in vms where place[v] = s) (vram[v]));
 

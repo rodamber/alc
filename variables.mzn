@@ -31,3 +31,7 @@ array[servers] of var int: cpu_load;
 % ram_load[i] is the load of server i
 array[servers] of var int: ram_load;
 
+% ------------------------------------------------------------------------------
+
+predicate on(servers: s) = (cpu_load[s] != 0);
+servers: on_count;

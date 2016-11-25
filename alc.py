@@ -151,13 +151,11 @@ def solve(csp, data):
         else:
             return False, output
 
-def satisfy(problem):
-    data = problem2dzn(problem)
+def satisfy(problem, on_count=None):
+    if on_count is None:
+        on_count = len(problem[0])
+    data = problem2dzn(problem, on_count)
     return solve('satisfy.mzn', data)
-
-def minimize(problem):
-    data = problem2dzn(problem)
-    return solve('minimize.mzn', data)
 
 def main(file_name=''):
     if (file_name == ''):
@@ -182,13 +180,11 @@ def main(file_name=''):
             print('=== Good call!')
             break
 
-        # print('--------------1--------------')
-        # # Wrong, because this will try with all the possible servers,
-        # # disregarding num_servers
-        # sat, output = minimize((servers, vms))
-        # if sat:
-        #     print(output)
-        #     break
+        print('--------------1--------------')
+        sat, output = satisfy((servers, vms), num_servers)
+        if sat:
+            print(output)
+            break
 
 
 if __name__ == "__main__":
