@@ -39,7 +39,8 @@ predicate on(servers: s) = (cpu_load[s] != 0);
 
 var servers: on_count = sum (s in servers) (bool2int(on(s)));
 
-% constraint on_count = 14;
+% constraint on_count >= 7;
+% constraint on_count = 20;
 
 constraint forall (s in servers) (cpu_load[s] = sum (v in vms where place[v] = s) (vcpu[v]));
 constraint forall (s in servers) (ram_load[s] = sum (v in vms where place[v] = s) (vram[v]));
@@ -64,7 +65,8 @@ constraint sum (s in servers where on(s)) (sram[s]) >= sum (v in vms) (vram[v]);
 % Solve 
 % ------------------------------------------------------------------------------
 
-solve minimize on_count;
+solve :: int_search([on_count], first_fail, indomain_min, complete)
+      minimize on_count;
 % solve satisfy;
 
 output["o " ++ show(on_count) ++ "\n"] ++
