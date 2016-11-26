@@ -1,6 +1,6 @@
 include "constraints.mzn";
 
-var servers: on_count;
+var min_num_servers..num_servers: on_count;
 
 solve :: int_search([on_count], first_fail, indomain_min, complete)
       minimize on_count;

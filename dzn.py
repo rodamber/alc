@@ -23,14 +23,22 @@ def vms2dzn(vms):
                                                  for vm in vms])
     return '\n'.join([num_vms, vjob, vindex, vcpu, vram, vac])
 
+def min_num_servers(vms):
+    jobs            = [list(g) for _, g in groupby(vms, lambda v: v.job_id)]
+    ac_matrix       = [[vm for vm in job if vm.anti_collocation] for job in jobs]
+    min_num_servers = max([len(j) for j in ac_matrix])
+
+    return min_num_servers
+
 def problem2dzn(problem, on_count=None, type='satisfy'):
     if on_count is None:
         on_count = len(problem[0])
 
     servers, vms = problem
     on = 'on_count = {};'.format(on_count)
+    mns = 'min_num_servers = {};'.format(min_num_servers(vms))
 
-    return '\n\n'.join([servers2dzn(servers), vms2dzn(vms)] + \
+    return '\n\n'.join([servers2dzn(servers), vms2dzn(vms), mns] + \
                        ([on] if type == 'satisfy' else []))
 
 if __name__ == "__main__":

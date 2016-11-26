@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # encoding: utf-8
 
+from copy import deepcopy
 from itertools import *
 import os
 import subprocess
@@ -122,86 +123,139 @@ def get_problem(file_name):
                                     ram_req, anti_collocation)]
     return servers, vms
 
-def minizinc_cmd(model_file_name, data):
-    executable = './MiniZinc/minizinc'
+def place(vm, server, assignment):
+    assert(vm.cpu_req == vm.ram_req == 1)
+
+    if vm in assignment[server]:
+        return None
+    elif server.cpu_cap == 0 or server.ram_cap == 0:
+        return None
+    elif vm.anti_collocation and \
+         [v for v in assignment[server] if v.job_id == vm.job_id and v.anti_collocation]:
+        return None
+    else:
+        assignment[server] += [vm]
+        server.cpu_cap -= 1
+        server.ram_cap -= 1
+        return assignment
+
+def assign(simple_vms, partial_assignment):
+    if not simple_vms:
+        return partial_assignment
+
+    servers_ = [deepcopy(s) for s in partial_assignment]
+
+    for s in servers_:
+        for vm in partial_assignment[s]:
+            s.cpu_cap -= vm.cpu_req
+            s.ram_cap -= vm.ram_req
+
+    key = lambda s: min(s.cpu_cap, s.ram_cap)
+
+    if sum(key(s) for s in servers_) < len(simple_vms):
+        return None
+
+    servers_ = sorted(servers_, key =key, reverse =True)
+
+    ac_vms = sorted([vm for vm in simple_vms if vm.anti_collocation],
+                    key=lambda v: v.job_id)
+    ac_matrix = [list(g) for _, g in groupby(ac_vms, lambda v: v.job_id)]
+    ac_vms = [x for job in sorted(ac_matrix, key=len, reverse=True) for x in job]
+
+    not_ac_vms = [vm for vm in simple_vms if not vm.anti_collocation]
+    vms_       = ac_vms + not_ac_vms
+
+    full_assignment = {s : partial_assignment[s] for s in servers_}
+
+    for vm in vms_:
+        placed = True
+
+        for s in full_assignment:
+            if place(vm, s, full_assignment) is not None:
+                break
+        else:
+            placed = False
+
+        if placed == False:
+            return None
+
+    return full_assignment
+
+def basic_solve(servers, vms):
+    jobs            = [list(g) for _, g in groupby(vms, lambda v: v.job_id)]
+    ac_matrix       = [list(filter(lambda vm: vm.anti_collocation, j)) for j in jobs]
+    min_num_servers = max(map(len, ac_matrix))
+
+    servers = sorted(servers, key=lambda s: min(s.cpu_cap, s.ram_cap), reverse=True)
+
+    for num_servers in range(min_num_servers, len(servers) + 1):
+        assignment = assign(vms, {s: [] for s in servers[0:num_servers]})
+
+        if assignment is not None:
+            return assignment
+    return None
+
+def complex_vms(vms):
+    return [vm for vm in vms if vm.cpu_req != 1 or vm.ram_req != 1]
+
+def print_assignment(assignment):
+    server_dict = {vm: s for s in assignment for vm in assignment[s]}
+
+    for s in assignment.keys():
+        for vm in assignment[s]:
+            server_dict[vm] = s
+
+    num_servers = len([s for s in assignment if assignment[s]])
+
+    print('o {}'.format(num_servers))
+    for vm in server_dict.keys():
+        print('{} {} -> {}'.format(vm.job_id, vm.vm_index, server_dict[vm].id))
+
+def minizinc_cmd(model_file_name, data, solver):
     solution_sep = '--solution-separator ""'
     search_complete_msg = '--search-complete-msg ""'
     unsat_msg = '--unsat-msg "unsat"'
 
-    return ' '.join([executable, solution_sep, search_complete_msg, unsat_msg,
+    return ' '.join([solver, solution_sep, search_complete_msg, unsat_msg,
                      model_file_name, '-D "{}"'.format(data)])
 
-def min_num_servers(vms):
-    jobs            = [list(g) for _, g in groupby(vms, lambda v: v.job_id)]
-    ac_matrix       = [[vm for vm in job if vm.anti_collocation] for job in jobs]
-    min_num_servers = max([len(j) for j in ac_matrix])
-
-    return min_num_servers
-
-def solve(csp, data):
+def solve(csp, data, solver):
     import stdchannel
 
-    cmd = minizinc_cmd(csp, data)
+    cmd = minizinc_cmd(csp, data, solver)
     with stdchannel.redirect(sys.stderr, os.devnull):
         output = subprocess.check_output(cmd, shell=True).decode('utf-8')
 
-        # print('output={}'.format(output))
-        if output[:5] != 'unsat': # sat
-            return True, output[:-2]
-        else:
+        if output[:5] == 'unsat':
             return False, output
+        else:
+            return True,  output[:-3]
 
-def satisfy(problem, on_count=None):
-    if on_count is None:
-        on_count = len(problem[0])
-    data = problem2dzn(problem, on_count)
-    return solve('satisfy.mzn', data)
-
-def minimize(problem):
+def minimize(problem, solver):
     data = problem2dzn(problem, type='minimize')
-    return solve('minimize.mzn', data)
+    return solve('minimize.mzn', data, solver)
 
 def main(file_name=''):
+    """
+    Duvidas
+    1. Como fazer bundle do minizinc?
+    2. Faz mal imprimir linhas em branco extra?
+    3. Warnings?
+    """
     if (file_name == ''):
         print("USAGE: proj3 <scenario-file-name>")
         return
 
     servers, vms = get_problem(file_name)
 
-    sat, output = minimize((servers, vms))
-    if sat: print(output)
-
-    # Search
-    # sat = False
-    # for num_servers in range(min_num_servers(vms), len(servers) + 1):
-    #     print('num_servers={}'.format(num_servers))
-
-    #     print('--------------0--------------')
-    #     ss = sorted(servers, key=lambda s: s.ram_cap, reverse=True)[:num_servers]
-    #     print('servers={}'.format([s.id for s in ss]))
-
-    #     sat, output = satisfy((ss, vms))
-    #     if sat:
-    #         print(output)
-    #         print('=== Good call!')
-    #         break
-
-    #     # print('--------------1--------------')
-    #     # ss = sorted(servers, key=lambda s: s.cpu_cap, reverse=True)[:num_servers]
-    #     # print('servers={}'.format([s.id for s in ss]))
-
-    #     # sat, output = satisfy((ss, vms))
-    #     # if sat:
-    #     #     print(output)
-    #     #     print('=== Good call!')
-    #     #     break
-
-    #     print('--------------2--------------')
-    #     sat, output = satisfy((servers, vms), num_servers)
-    #     if sat:
-    #         print(output)
-    #         break
-
+    if not complex_vms(vms):
+        print_assignment(basic_solve(servers, vms))
+    else:
+        sat, output = minimize((servers, vms), solver='./MiniZinc/mzn-g12lazy')
+        if sat:
+            print(output)
+        else:
+            print('Bug: found no solution.')
 
 if __name__ == "__main__":
     main(get_file_name())

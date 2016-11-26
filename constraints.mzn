@@ -31,10 +31,6 @@ constraint sum (s in servers) (sram[s]) >= sum (v in vms) (vram[v]);
 
 % Fast
 constraint forall (s1 in servers)
-  (forall (s2 in servers where (scpu[s1] <= scpu[s2] /\ sram[s1] <= sram[s2]))
+  (forall (s2 in servers where (scpu[s1] <  scpu[s2] /\ sram[s1] <= sram[s2]) \/
+                               (scpu[s1] <= scpu[s2] /\ sram[s1] <  sram[s2]))
     (on(s1) -> on(s2)));
-
-% Fast but wrong!
-% constraint forall (v1 in vms)
-%   (forall (v2 in vms where vjob[v1] != vjob[v2])
-%     ((vcpu[v1] = vcpu[v2] /\ vram[v1] = vram[v2]) -> place[v1] <= place[v2]));

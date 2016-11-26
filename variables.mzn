@@ -30,6 +30,9 @@ array[servers] of var int: cpu_load;
 % ram_load[i] is the load of server i
 array[servers] of var int: ram_load;
 
+% max number of anti-collocation vms per job
+servers: min_num_servers;
+
 % ------------------------------------------------------------------------------
 
 predicate on(servers: s) = (cpu_load[s] != 0);
