@@ -251,7 +251,7 @@ def main(file_name=''):
     if not complex_vms(vms):
         print_assignment(basic_solve(servers, vms))
     else:
-        sat, output = minimize((servers, vms), solver='./MiniZinc/mzn-g12lazy')
+        sat, output = minimize((servers, vms), solver='./minizinc/bin/mzn-g12lazy')
         if sat:
             print(output)
         else:

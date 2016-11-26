@@ -1,44 +1,36 @@
 Group: 13
+
 Students:
   - João Nuno Estevão Fidalgo Ferreira Alves (79155)
   - Rodrigo André Moreira Bernardo (78942)
-Programming Language: python3
-Solver: Z3 version 4.4.1
 
-*Note*: We resorted to using the z3py API instead of using the SMT-LIB v2 language
-interface.
+Programming Language: python3
+
+Solver: MiniZinc 2.1.0 using the G12/LazyFD backend
 
 # Running
 
-If Z3 is not on path we have to point the PYTHONPATH variable path to the
-directory where libz3.so is, along with the z3 python scripts:
-
 ```
-export PYTHONPATH=path/to/z3/build/directory
-```
-
-The program is run by issuing
-
-```
-./proj2 <input-file>
+export PATH=$PATH:$PWD/minizinc/bin/
+./proj3 path/to/input/file
 ```
 
 # Solution sketch
 
 The solution sketch is simple: if the problem only requires the placement of
 "simple" virtual machines (VM), i.e., VMs with cpu and ram capacities equal to
-1, then we apply a polynomial complexity algorithm; if not we use the z3 solver
-to find a placement for the VMs. In the second case, we make use of integer
-arithmetic and uninterpreted functions to ensure the constraints mentioned in
-the specs are satisfied.
+1, then we apply a polynomial complexity algorithm; if not we use minizinc
+to find a placement for the VMs.
 
 The search for the minimum number of servers is also pretty straightforward. We
 know that we need a number of servers of at least the maximum number of
-anti-collocation VMs per job, *n*. We summon z3 for each number from n to the
-total number of servers until we get sat as a result. For each iteration we add
-a new restriction stating the number of servers that must be on. We make use of
-the push and pop methods of the z3 solver object to ensure that we don't
-recompute the complete formula each time.
+anti-collocation VMs per job, *n*.  .......
+
+<!-- We summon z3 for each number from n to the -->
+<!-- total number of servers until we get sat as a result. For each iteration we add -->
+<!-- a new restriction stating the number of servers that must be on. We make use of -->
+<!-- the push and pop methods of the z3 solver object to ensure that we don't -->
+<!-- recompute the complete formula each time. -->
 
 # Optimizations
 
