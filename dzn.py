@@ -23,14 +23,15 @@ def vms2dzn(vms):
                                                  for vm in vms])
     return '\n'.join([num_vms, vjob, vindex, vcpu, vram, vac])
 
-def problem2dzn(problem, on_count=None):
+def problem2dzn(problem, on_count=None, type='satisfy'):
     if on_count is None:
         on_count = len(problem[0])
 
     servers, vms = problem
     on = 'on_count = {};'.format(on_count)
 
-    return '\n\n'.join([servers2dzn(servers), vms2dzn(vms), on])
+    return '\n\n'.join([servers2dzn(servers), vms2dzn(vms)] + \
+                       ([on] if type == 'satisfy' else []))
 
 if __name__ == "__main__":
     print(problem2dzn(get_problem(get_file_name())))

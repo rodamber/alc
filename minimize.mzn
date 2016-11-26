@@ -1,8 +1,9 @@
 include "constraints.mzn";
 
-servers: on_count;
+var servers: on_count;
 
-solve satisfy;
+solve :: int_search([on_count], first_fail, indomain_min, complete)
+      minimize on_count;
 
 output["o " ++ show(on_count) ++ "\n"] ++
       [show(vjob[v]) ++ " " ++ show(vindex[v]) ++ " -> "++

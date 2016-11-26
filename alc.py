@@ -157,6 +157,10 @@ def satisfy(problem, on_count=None):
     data = problem2dzn(problem, on_count)
     return solve('satisfy.mzn', data)
 
+def minimize(problem):
+    data = problem2dzn(problem, type='minimize')
+    return solve('minimize.mzn', data)
+
 def main(file_name=''):
     if (file_name == ''):
         print("USAGE: proj3 <scenario-file-name>")
@@ -164,27 +168,39 @@ def main(file_name=''):
 
     servers, vms = get_problem(file_name)
 
+    sat, output = minimize((servers, vms))
+    if sat: print(output)
+
     # Search
-    sat = False
-    for num_servers in range(min_num_servers(vms), len(servers) + 1):
-        ss = sorted(servers, key=lambda s: s.ram_cap, reverse=True)[:num_servers]
+    # sat = False
+    # for num_servers in range(min_num_servers(vms), len(servers) + 1):
+    #     print('num_servers={}'.format(num_servers))
 
-        print('num_servers={}'.format(num_servers))
+    #     print('--------------0--------------')
+    #     ss = sorted(servers, key=lambda s: s.ram_cap, reverse=True)[:num_servers]
+    #     print('servers={}'.format([s.id for s in ss]))
 
-        print('--------------0--------------')
-        print('servers={}'.format([s.id for s in ss]))
+    #     sat, output = satisfy((ss, vms))
+    #     if sat:
+    #         print(output)
+    #         print('=== Good call!')
+    #         break
 
-        sat, output = satisfy((ss, vms))
-        if sat:
-            print(output)
-            print('=== Good call!')
-            break
+    #     # print('--------------1--------------')
+    #     # ss = sorted(servers, key=lambda s: s.cpu_cap, reverse=True)[:num_servers]
+    #     # print('servers={}'.format([s.id for s in ss]))
 
-        print('--------------1--------------')
-        sat, output = satisfy((servers, vms), num_servers)
-        if sat:
-            print(output)
-            break
+    #     # sat, output = satisfy((ss, vms))
+    #     # if sat:
+    #     #     print(output)
+    #     #     print('=== Good call!')
+    #     #     break
+
+    #     print('--------------2--------------')
+    #     sat, output = satisfy((servers, vms), num_servers)
+    #     if sat:
+    #         print(output)
+    #         break
 
 
 if __name__ == "__main__":
