@@ -233,7 +233,7 @@ def solve(csp, data, solver):
 
 def minimize(problem, solver):
     data = problem2dzn(problem, type='minimize')
-    return solve('minimize.mzn', data, solver)
+    return solve('csp.mzn', data, solver)
 
 def main(file_name=''):
     """
