@@ -236,12 +236,6 @@ def minimize(problem, solver):
     return solve('csp.mzn', data, solver)
 
 def main(file_name=''):
-    """
-    Duvidas
-    1. Como fazer bundle do minizinc?
-    2. Faz mal imprimir linhas em branco extra?
-    3. Warnings?
-    """
     if (file_name == ''):
         print("USAGE: proj3 <scenario-file-name>")
         return
@@ -251,7 +245,7 @@ def main(file_name=''):
     if not complex_vms(vms):
         print_assignment(basic_solve(servers, vms))
     else:
-        sat, output = minimize((servers, vms), solver='./minizinc/bin/mzn-g12lazy')
+        sat, output = minimize((servers, vms), solver='mzn-g12lazy')
         if sat:
             print(output)
         else:

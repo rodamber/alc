@@ -34,6 +34,7 @@ array[servers] of var int: ram_load;
 % max number of anti-collocation vms per job
 servers: min_num_servers;
 
+% number of servers turned on (that is what we want to find out)
 var min_num_servers..num_servers: on_count;
 
 predicate on(servers: s) = (cpu_load[s] != 0);
@@ -66,10 +67,6 @@ constraint sum (v in vms) (vram[v]) = sum (s in servers) (ram_load[s]);
 constraint sum (s in servers) (scpu[s]) >= sum (v in vms) (vcpu[v]);
 constraint sum (s in servers) (sram[s]) >= sum (v in vms) (vram[v]);
 
-% constraint forall (v in vms) (forall (s in servers) (vcpu[v] > scpu[s] -> place[v] != s));
-% constraint forall (v in vms) (forall (s in servers) (vram[v] > sram[s] -> place[v] != s));
-
-% Fast
 constraint forall (s1 in servers)
   (forall (s2 in servers where (scpu[s1] <  scpu[s2] /\ sram[s1] <= sram[s2]) \/
                                (scpu[s1] <= scpu[s2] /\ sram[s1] <  sram[s2]))
