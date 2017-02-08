@@ -1,47 +1,11 @@
-Group: 13
+# Algorithms for Computational Logic 2016/2017 IST, University of Lisbon
 
-Students:
-  - João Nuno Estevão Fidalgo Ferreira Alves (79155)
-  - Rodrigo André Moreira Bernardo (78942)
+In this course we used SAT, SMT and CSP to solve the Virtual Machine
+Consolidation problem (defined in the folder specs) in our 1st, 2nd and 3rd
+projects, respectively.
 
-Programming Language: python3
+# Project solutions
 
-Solver: MiniZinc 2.1.0 using the G12/LazyFD backend
-
-# Running
-
-We assume *mzn-g12lazy* is in the path. To run the project just issue
-
-```
-./proj3 path/to/input/file
-```
-
-# Solution sketch
-
-The solution sketch is simple: if the problem only requires the placement of
-"simple" virtual machines (VM), i.e., VMs with cpu and ram capacities equal to
-1, then we apply a polynomial complexity algorithm; if not we use minizinc
-to find a placement for the VMs.
-
-We added the usual constraints stating that each VM must be on one server, that
-the cpu/ram capacities of the servers must not be exceeded and regarding
-anti-collocation constraints.
-
-The servers and the VMs are coded in minizinc using arrays to represent their
-attributes (cpu, ram, where each VM is placed, etc.).
-
-
-# Optimizations
-
-We added redundant restrictions that implied that the sum of the cpu/ram
-capacities of the servers was always greater than or equal to the sum of the
-cpu/ram requirements of the virtual machines. We also said that if a server x is
-"worse" than another and is turned on, then all the servers "better" than server x
-must be turned on. Finally, the cpu/ram load of all the servers must be equal to
-the sum of the cpu/ram requirements of all the VMs.
-
-We also provided a solve annotation to try to improve the search speed.
-
-With these optimizations we were able to solve all the provided instances
-sequentially in under 13s.
-
+Project 1 (SAT) -> [here](https://github.com/rodamber/alc/tree/53f1a9c89f96c368b67ea9e2c864f25567c3169c)
+Project 2 (SMT) -> [here](https://github.com/rodamber/alc/tree/c103225b49fa84c4b4b7d834bc8ed087bdddd150)
+Project 3 (CSP) -> [here](https://github.com/rodamber/alc/tree/7b2526537cbcc7a86ca5e9543dbc5e99c536141c)

@@ -1,3 +1,0 @@
-#!/bin/sh
-
-FLATZINC_CMD=flatzinc minizinc -G linear -b mip "$@"

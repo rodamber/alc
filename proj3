@@ -1,2 +1,0 @@
-#!/usr/bin/env bash
-./alc.py $1
